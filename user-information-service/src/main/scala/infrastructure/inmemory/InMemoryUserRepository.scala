@@ -15,8 +15,6 @@ trait InMemoryUserRepository extends UserRepository {
 
   def updateTweetCount(userId: String, amount: Int): Unit = 
     createOrUpdateUser(userId, User.fromTweetCount(userId, amount), u => u.withTweetCount(u.tweetCount + amount))
-  def incrementTweetCount(userId: String): Unit = updateTweetCount(userId, 1)
-  def decrementTweetCount(userId: String): Unit = updateTweetCount(userId, -1)
 
   def getUser(userId: String): Future[Option[User]] = Future.successful(users.get(userId))
 }

@@ -5,6 +5,7 @@ import scala.concurrent.Future
 
 /*
 Defines methods for looking up a user, and methods for updating user information.
+If there is behavior common to all impls of this api, that code goes here.
 Should these be separate traits or combined in a single trait?
   - separate traits will be impl by common code based on storage tech
   - traits would be used by separate things:
@@ -17,17 +18,6 @@ Infrastucture layer contains:
   - use HTTP/JSON lib to provide public API and use that impl to get user info
 */
 
-// trait UserApi {
-//   def updateUserFields(userId: String, username: String): Unit //TODO other fields
-
-//   //could use single update command, or separate increment/decrement commands
-//   def updateTweetCount(userId: String, amount: Int): Unit
-//   def incrementTweetCount(userId: String): Unit
-//   def decrementTweetCount(userId: String): Unit
-
-//   def getUser(userId: String): Future[Option[User]]
-// }
-
 trait UserReadRepository {
   def getUser(userId: String): Future[Option[User]]
 }
@@ -37,8 +27,8 @@ trait UserWriteRepository {
 
   //could use single update command, or separate increment/decrement commands
   def updateTweetCount(userId: String, amount: Int): Unit
-  def incrementTweetCount(userId: String): Unit
-  def decrementTweetCount(userId: String): Unit
+  def incrementTweetCount(userId: String): Unit = updateTweetCount(userId, 1)
+  def decrementTweetCount(userId: String): Unit = updateTweetCount(userId, -1)
 }
 
 trait UserRepository extends UserReadRepository with UserWriteRepository
