@@ -1,3 +1,5 @@
+*I will be using this project in an [upcoming talk at Prairie.Code()](http://prairiecode.amegala.com/sessions/updating-materialized-views-and-caches-using-kafka).*
+
 # User Information Service
 
 ## Requirements
