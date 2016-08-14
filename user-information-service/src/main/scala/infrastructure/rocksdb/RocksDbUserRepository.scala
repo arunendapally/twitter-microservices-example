@@ -1,3 +1,3 @@
-package infrastructure
+package infrastructure.rocksdb
 
 trait RocksDbUserRepository
