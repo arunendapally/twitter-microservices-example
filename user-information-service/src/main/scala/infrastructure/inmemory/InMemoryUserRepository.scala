@@ -1,4 +1,4 @@
-package infrastructure
+package infrastructure.inmemory
 
 import domain._
 import api._
@@ -17,4 +17,13 @@ trait InMemoryUserRepository extends UserRepository {
     createOrUpdateUser(userId, User.fromTweetCount(userId, amount), u => u.withTweetCount(u.tweetCount + amount))
 
   def getUser(userId: String): Future[Option[User]] = Future.successful(users.get(userId))
+}
+
+trait InMemoryUserRepositoryWithTestData extends InMemoryUserRepository {
+  updateUserFields("testUser1", "testUser1")
+
+  updateUserFields("testUser2", "testUser2")
+  updateTweetCount("testUser2", 1)
+
+  updateTweetCount("testUser3", 1)
 }
