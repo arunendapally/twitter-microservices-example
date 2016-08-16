@@ -6,19 +6,13 @@ import org.http4s._
 import org.http4s.dsl._
 import org.http4s.server.{Server, ServerApp}
 import org.http4s.server.blaze._
-import org.http4s.circe.CirceInstances
 import scalaz.concurrent.Task
-import scala.concurrent.Future
-import domain.User
-import io.circe._
-import io.circe.generic.auto._
-import io.circe.syntax._
 import scala.concurrent.ExecutionContext.Implicits.global //used in Future.map below...
 
-trait UserInformationService extends UserReadRepository with CirceInstances {
+trait UserInformationService extends UserReadRepository {
   def userResponse(userId: String): Task[Response] = 
     getUser(userId) flatMap { 
-      case Some(user) => Ok(user.asJson)
+      case Some(user) => Ok(user)
       case None => NotFound()
     } asTask
 

@@ -7,4 +7,5 @@ import io.circe.generic.auto._
 
 package object http4s extends CirceInstances {
   implicit val userEntityDecoder = jsonOf[User]
+  implicit val userEntityEncoder = jsonEncoderOf[User]
 }
