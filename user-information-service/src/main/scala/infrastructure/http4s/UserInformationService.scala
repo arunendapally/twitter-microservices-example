@@ -1,13 +1,18 @@
 package infrastructure.http4s
 
-import api.UserReadRepository
+import api.UserRepository
 import core.ScalaFutureConverters._
 import org.http4s._
 import org.http4s.dsl._
 import scalaz.concurrent.Task
 import scala.concurrent.ExecutionContext.Implicits.global
+import domain.User
+import api.{Serializer, Deserializer}
 
-trait UserInformationService extends UserReadRepository {
+trait UserInformationService extends UserRepository {
+  implicit def userIdSerializer: Serializer[String]
+  implicit def userDeserializer: Deserializer[User]
+  
   def userResponse(userId: String): Task[Response] = 
     getUser(userId) flatMap { 
       case Some(user) => Ok(user)

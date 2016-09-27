@@ -1,3 +1,0 @@
-package infrastructure.rocksdb
-
-trait RocksDbUserRepository

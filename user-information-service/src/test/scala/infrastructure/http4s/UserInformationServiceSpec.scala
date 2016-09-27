@@ -1,7 +1,9 @@
 package infrastructure.http4s
 
-import infrastructure.inmemory.InMemoryUserRepository
+import infrastructure.inmemory.InMemoryRawKeyValueStore
+import infrastructure.confluentschemaregistry._
 import domain.User
+import api._
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import org.http4s._
@@ -22,11 +24,19 @@ object UserInformationServiceSpec extends Specification with org.specs2.matcher.
     }
   }
 
-  trait context extends Scope with UserInformationService with InMemoryUserRepository {
+  trait context extends Scope with UserInformationService {
     def serve(request: Request): Response =
       userInformationService.run(request).run
 
-    updateUserFields("user1", "user1")
-    updateTweetCount("user1", 1)
+    override val raw = new InMemoryRawKeyValueStore {}
+
+    override lazy val userIdSerializer: Serializer[String] = new TestConfluentAvroPrimitiveSerializer("test-users", true)
+    override lazy val userDeserializer: Deserializer[User] = new TestConfluentGenericRecordDeserializer[User](false)(GenericRecordUserReader)
+    lazy val userSerializer: Serializer[User] = new TestConfluentAvroGenericSerializer[User]("test-users", false)(GenericRecordUserWriter)
+
+    val userId1 = "user1"
+    val username1 = "user1"
+    val user1 = User.fromUserFields(userId1, username1).withTweetCount(1)
+    raw.put(userIdSerializer.toBytes(userId1), userSerializer.toBytes(user1))
   }
 }
