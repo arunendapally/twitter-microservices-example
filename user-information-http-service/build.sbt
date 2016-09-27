@@ -1,6 +1,6 @@
 organization := "ch.theza"
 
-name := "user-information-service"
+name := "user-information-http-service"
 
 scalaVersion := "2.11.8"
 
