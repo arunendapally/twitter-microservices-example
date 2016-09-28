@@ -1,9 +1,9 @@
 package infrastructure.confluentschemaregistry
 
 import api._
-import io.confluent.kafka.schemaregistry.client.{SchemaRegistryClient, MockSchemaRegistryClient}
+import io.confluent.kafka.schemaregistry.client.{SchemaRegistryClient, MockSchemaRegistryClient, CachedSchemaRegistryClient}
 import io.confluent.kafka.serializers.{KafkaAvroSerializer, KafkaAvroDeserializer}
-import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
+import io.confluent.kafka.serializers.{KafkaAvroDeserializerConfig, AbstractKafkaAvroSerDeConfig}
 import scala.collection.JavaConversions._
 import org.apache.avro.generic.GenericContainer
 import org.apache.avro.generic.GenericRecord
@@ -46,6 +46,10 @@ trait ConfluentAvroPrimitiveSerializer[T] extends ConfluentAvroSerializer with S
   override def toBytes(t: T): Array[Byte] = kafkaAvroSerializer.serialize(topic, t)
 }
 
+class RealConfluentAvroPrimitiveSerializer[T](schemaRegistryUrl: String, val topic: String, val isKey: Boolean) extends ConfluentAvroPrimitiveSerializer[T] {
+  override lazy val schemaRegistryClient: SchemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryUrl, 1000)
+}
+
 trait GenericContainerWriter[T] {
   def write(t: T): GenericContainer
 }
@@ -54,6 +58,10 @@ abstract class ConfluentAvroGenericSerializer[T : GenericContainerWriter] extend
   def topic: String
   lazy val writer = implicitly[GenericContainerWriter[T]]
   override def toBytes(t: T): Array[Byte] = kafkaAvroSerializer.serialize(topic, writer.write(t))
+}
+
+class RealConfluentAvroGenericSerializer[T : GenericContainerWriter](schemaRegistryUrl: String, val topic: String, val isKey: Boolean) extends ConfluentAvroGenericSerializer[T] {
+  override lazy val schemaRegistryClient: SchemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryUrl, 1000)
 }
 
 /*
@@ -96,6 +104,14 @@ abstract class ConfluentGenericRecordDeserializer[T : GenericRecordReader] exten
 abstract class ConfluentSpecificRecordDeserializer[R <: SpecificRecord, T](implicit reader: SpecificRecordReader[R, T]) extends ConfluentAvroDeserializer[T] {
   override def createConfigs = super.createConfigs ++ Map(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG -> "true")
   override def fromBytes(bytes: Array[Byte]): T = reader.read(deserialize(bytes).asInstanceOf[R])
+}
+
+class RealConfluentGenericRecordDeserializer[T : GenericRecordReader](schemaRegistryUrl: String, val isKey: Boolean) extends ConfluentGenericRecordDeserializer[T] {
+  override lazy val schemaRegistryClient: SchemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryUrl, 1000)
+}
+
+class RealConfluentSpecificRecordDeserializer[R <: SpecificRecord, T](schemaRegistryUrl: String, val isKey: Boolean)(implicit reader: SpecificRecordReader[R, T]) extends ConfluentSpecificRecordDeserializer[R, T] {
+  override lazy val schemaRegistryClient: SchemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryUrl, 1000)
 }
 
 trait TestConfluentAvroSerde extends ConfluentAvroSerde {

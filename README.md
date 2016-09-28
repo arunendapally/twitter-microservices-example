@@ -313,6 +313,7 @@
     - docker-compose.yml with kafka brokers
     - rocksdb kv store impl
   - what to do next?
+    - serde impls using read schema registry client
     - fix in-memory kafka test: not shutting down/cleaning up properly
     - generic kv lookup web service and concrete instance for user info
     - stream join service that produces user info to kafka topic that http service consumes
