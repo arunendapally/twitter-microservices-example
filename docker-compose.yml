@@ -49,3 +49,5 @@ kafka3:
     KAFKA_ADVERTISED_HOST_NAME: 192.168.99.100
     KAFKA_ZOOKEEPER_CONNECT: 192.168.99.100:2181/kafka
     KAFKA_ZK_ROOT: /kafka
+
+schemaregistry:
