@@ -1,0 +1,23 @@
+{
+  "namespace": "infrastructure.avro",
+  "type": "record",
+  "name": "User",
+  "fields": [
+    {
+      "name": "user_id",
+      "type": "string"
+    },
+    {
+      "name": "username",
+      "type": "string"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "description",
+      "type": "string"
+    }
+  ]
+}

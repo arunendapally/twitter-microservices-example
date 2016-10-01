@@ -1,0 +1,15 @@
+- receive data from Twitter Streaming API
+- output tweets to kafka topic
+  - key = userId String
+  - value = Tweet
+  - key & value need to be serialized using confluent avro serializers
+    - hooked up to schema registry
+    - key is just a primitive
+    - value
+      - we'll receive some twitter4j Status object from streaming api
+      - just need to convert that to a GenericRecord or SpecificRecord to serialize to kafka topic
+      - just pull out some main tweet fields (e.g. id, text, timestamp, etc) for now
+
+- should this also impl user service?
+  - status obj have both tweet and user data
+  - this service could also write to users kafka topic

@@ -1,0 +1,23 @@
+{
+  "namespace": "infrastructure.avro",
+  "type": "record",
+  "name": "Tweet",
+  "fields": [
+    {
+      "name": "tweet_id",
+      "type": "string"
+    },
+    {
+      "name": "text",
+      "type": "string"
+    },
+    {
+      "name": "created_at",
+      "type": "long"
+    },
+    {
+      "name": "user_id",
+      "type": "string"
+    }
+  ]
+}
