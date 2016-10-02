@@ -1,53 +1,19 @@
 zookeeper:
-  image: digitalwonderland/zookeeper:latest
+  image: confluent/zookeeper
   ports:
     - "2181:2181"
-  environment:
-    ZOOKEEPER_CLIENT_CNXNS: 300
 
 kafka:
-  image: wurstmeister/kafka:0.10.0.0
+  image: confluent/kafka
+  links:
+    - zookeeper
   ports:
     - "9092:9092"
-  links:
-    - "zookeeper:zk"
-  extra_hosts:
-    - "kafka:127.0.0.1"
-  volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-  environment:
-    KAFKA_ADVERTISED_HOST_NAME: 192.168.99.100
-    KAFKA_ZOOKEEPER_CONNECT: 192.168.99.100:2181/kafka
-    KAFKA_ZK_ROOT: /kafka
 
-kafka2:
-  image: wurstmeister/kafka:0.10.0.0
+schema-registry:
+  image: confluent/schema-registry
+  links:
+    - zookeeper
+    - kafka
   ports:
-    - "9093:9092"
-  links:
-    - "zookeeper:zk"
-  extra_hosts:
-    - "kafka:127.0.0.1"
-  volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-  environment:
-    KAFKA_ADVERTISED_HOST_NAME: 192.168.99.100
-    KAFKA_ZOOKEEPER_CONNECT: 192.168.99.100:2181/kafka
-    KAFKA_ZK_ROOT: /kafka
-
-kafka3:
-  image: wurstmeister/kafka:0.10.0.0
-  ports:
-    - "9094:9092"
-  links:
-    - "zookeeper:zk"
-  extra_hosts:
-    - "kafka:127.0.0.1"
-  volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-  environment:
-    KAFKA_ADVERTISED_HOST_NAME: 192.168.99.100
-    KAFKA_ZOOKEEPER_CONNECT: 192.168.99.100:2181/kafka
-    KAFKA_ZK_ROOT: /kafka
-
-schemaregistry:
+    - "8081:8081"
