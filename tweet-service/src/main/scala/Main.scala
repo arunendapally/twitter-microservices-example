@@ -15,14 +15,14 @@ object Main extends App with StatusListener {
   val config = ConfigFactory.load()
   val logger = LoggerFactory.getLogger(getClass)
 
-  val tweetsTopic = config.getString("service.tweets-topic")
-  val usersTopic = config.getString("service.users-topic")
+  val tweetsTopic = config.getString("tweet-service.tweets-topic")
+  val usersTopic = config.getString("tweet-service.users-topic")
 
   val props = new Properties()
-  props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getString("service.kafka-bootstrap-servers"))
+  props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getString("tweet-service.kafka-bootstrap-servers"))
   props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
   props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
-  props.put("schema.registry.url", config.getString("service.schema-registry-url"))
+  props.put("schema.registry.url", config.getString("tweet-service.schema-registry-url"))
   val producer = new KafkaProducer[String, IndexedRecord](props)
 
   def toAvro(status: Status): (Tweet, User) = (
