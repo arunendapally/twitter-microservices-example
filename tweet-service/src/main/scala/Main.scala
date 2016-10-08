@@ -45,16 +45,17 @@ object Main extends App with StatusListener {
   }
 
   override def onStatus(status: Status): Unit = {
+    // logger.info(status.toString)
     val (tweet, user) = toAvro(status)
     producer.send(tweetsTopic, tweet.getTweetId, tweet)
     producer.send(usersTopic, user.getUserId, user)
   }
 
-  override def onDeletionNotice(notice: StatusDeletionNotice): Unit = ???
-  override def onScrubGeo(userId: Long, upToStatusId: Long): Unit = ???
-  override def onStallWarning(warning: StallWarning): Unit = ???
-  override def onTrackLimitationNotice(notice: Int): Unit = ???
-  override def onException(e: Exception): Unit = ???
+  override def onDeletionNotice(notice: StatusDeletionNotice): Unit = {}
+  override def onScrubGeo(userId: Long, upToStatusId: Long): Unit = {}
+  override def onStallWarning(warning: StallWarning): Unit = {}
+  override def onTrackLimitationNotice(notice: Int): Unit = {}
+  override def onException(e: Exception): Unit = {}
 
   val twitter4jConfiguration = new ConfigurationBuilder()
     .setOAuthConsumerKey(config.getString("twitter.oauth.consumer-key"))
@@ -63,11 +64,13 @@ object Main extends App with StatusListener {
     .setOAuthAccessTokenSecret(config.getString("twitter.oauth.access-token-secret"))
     .build()
 
-  val twitterStream = new TwitterStreamFactory().getInstance()
+  val twitterStream = new TwitterStreamFactory(twitter4jConfiguration).getInstance()
   twitterStream.addListener(this)
   twitterStream.sample()
 
   logger.info("Consuming from Twitter Streaming API and writing to Kafka...")
+  logger.info(s"Tweets are written to the $tweetsTopic topic")
+  logger.info(s"Users are written to the $usersTopic topic")
 
   scala.sys.addShutdownHook {
     twitterStream.shutdown()
