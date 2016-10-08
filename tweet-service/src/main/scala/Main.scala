@@ -3,8 +3,9 @@ package infrastructure
 import twitter4j.{StatusListener, Status, TwitterStreamFactory, StatusDeletionNotice, StallWarning}
 import twitter4j.conf.ConfigurationBuilder
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord, ProducerConfig}
-import io.confluent.kafka.serializers.KafkaAvroSerializer
+import io.confluent.kafka.serializers.{KafkaAvroSerializer, AbstractKafkaAvroSerDeConfig}
 import org.apache.avro.generic.IndexedRecord
+import org.apache.avro.specific.SpecificRecord
 import java.util.Properties
 import infrastructure.avro.{Tweet, User}
 import org.slf4j.LoggerFactory
@@ -17,26 +18,28 @@ object Main extends App with StatusListener {
 
   val tweetsTopic = config.getString("tweet-service.tweets-topic")
   val usersTopic = config.getString("tweet-service.users-topic")
+  val kafkaBootstrapServers = config.getString("tweet-service.kafka-bootstrap-servers")
 
   val props = new Properties()
-  props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getString("tweet-service.kafka-bootstrap-servers"))
+  props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers)
   props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
   props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
-  props.put("schema.registry.url", config.getString("tweet-service.schema-registry-url"))
-  val producer = new KafkaProducer[String, IndexedRecord](props)
+  props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, config.getString("tweet-service.schema-registry-url"))
+  val producer = new KafkaProducer[String, SpecificRecord](props)
 
   def toAvro(status: Status): (Tweet, User) = (
-    Tweet.newBuilder
+    Tweet.newBuilder()
       .setTweetId(status.getId.toString)
       .setText(status.getText)
       .setCreatedAt(status.getCreatedAt.getTime)
-      .build,
-    User.newBuilder
+      .setUserId(status.getUser.getId.toString)
+      .build(),
+    User.newBuilder()
       .setUserId(status.getUser.getId.toString)
       .setUsername(status.getUser.getScreenName)
       .setName(status.getUser.getName)
       .setDescription(status.getUser.getDescription)
-      .build
+      .build()
   )
 
   implicit def tuple3ToProducerRecord[K, V](tuple: (String, K, V)): ProducerRecord[K, V] = {
@@ -45,10 +48,9 @@ object Main extends App with StatusListener {
   }
 
   override def onStatus(status: Status): Unit = {
-    // logger.info(status.toString)
     val (tweet, user) = toAvro(status)
-    producer.send(tweetsTopic, tweet.getTweetId, tweet)
-    producer.send(usersTopic, user.getUserId, user)
+    val tweetResult = producer.send(new ProducerRecord[String, SpecificRecord](tweetsTopic, tweet.getTweetId, tweet))
+    val userResult = producer.send(new ProducerRecord[String, SpecificRecord](usersTopic, user.getUserId, user))
   }
 
   override def onDeletionNotice(notice: StatusDeletionNotice): Unit = {}
@@ -68,7 +70,7 @@ object Main extends App with StatusListener {
   twitterStream.addListener(this)
   twitterStream.sample()
 
-  logger.info("Consuming from Twitter Streaming API and writing to Kafka...")
+  logger.info(s"Consuming from Twitter Streaming API and writing to Kafka at $kafkaBootstrapServers...")
   logger.info(s"Tweets are written to the $tweetsTopic topic")
   logger.info(s"Users are written to the $usersTopic topic")
 

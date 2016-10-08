@@ -4,7 +4,7 @@ name := "tweet-service"
 
 scalaVersion := "2.11.8"
 
-lazy val kafkaVersion = "0.10.0.0"
+lazy val kafkaVersion = "0.10.0.1"
 
 resolvers ++= Seq(
   "Confluent" at "http://packages.confluent.io/maven/"
@@ -12,7 +12,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   "org.twitter4j" % "twitter4j-stream" % "4.0.5",
-  "io.confluent" % "kafka-avro-serializer" % "3.0.0" excludeAll(
+  "io.confluent" % "kafka-avro-serializer" % "3.0.1" excludeAll(
     ExclusionRule(organization = "com.sun.jdmk"),
     ExclusionRule(organization = "com.sun.jmx"),
     ExclusionRule(organization = "javax.jms"),
