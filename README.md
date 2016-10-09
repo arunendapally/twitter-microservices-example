@@ -313,6 +313,7 @@
     - docker-compose.yml with kafka brokers
     - rocksdb kv store impl
     - serde impls using read schema registry client
+    - consume from twitter streaming api, writer tweets & users to kafka topics
   - what to do next?
     - stream join service that produces user info to kafka topic that http service consumes
     - fix in-memory kafka test: not shutting down/cleaning up properly
