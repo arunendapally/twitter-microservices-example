@@ -1,5 +1,5 @@
 {
-  "namespace": "infrastructure.avro",
+  "namespace": "domain",
   "type": "record",
   "name": "User",
   "fields": [

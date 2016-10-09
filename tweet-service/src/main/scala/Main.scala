@@ -7,7 +7,7 @@ import io.confluent.kafka.serializers.{KafkaAvroSerializer, AbstractKafkaAvroSer
 import org.apache.avro.generic.IndexedRecord
 import org.apache.avro.specific.SpecificRecord
 import java.util.Properties
-import infrastructure.avro.{Tweet, User}
+import domain._
 import org.slf4j.LoggerFactory
 import com.typesafe.config.ConfigFactory
 import scala.language.implicitConversions
@@ -27,28 +27,13 @@ object Main extends App with StatusListener {
   props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, config.getString("tweet-service.schema-registry-url"))
   val producer = new KafkaProducer[String, SpecificRecord](props)
 
-  def toAvro(status: Status): (Tweet, User) = (
-    Tweet.newBuilder()
-      .setTweetId(status.getId.toString)
-      .setText(status.getText)
-      .setCreatedAt(status.getCreatedAt.getTime)
-      .setUserId(status.getUser.getId.toString)
-      .build(),
-    User.newBuilder()
-      .setUserId(status.getUser.getId.toString)
-      .setUsername(status.getUser.getScreenName)
-      .setName(status.getUser.getName)
-      .setDescription(status.getUser.getDescription)
-      .build()
-  )
-
   implicit def tuple3ToProducerRecord[K, V](tuple: (String, K, V)): ProducerRecord[K, V] = {
     val (topic, key, value) = tuple
     new ProducerRecord[K, V](topic, key, value)
   }
 
   override def onStatus(status: Status): Unit = {
-    val (tweet, user) = toAvro(status)
+    val (tweet, user) = Conversions.fromStatus(status)
     val tweetResult = producer.send(new ProducerRecord[String, SpecificRecord](tweetsTopic, tweet.getTweetId, tweet))
     val userResult = producer.send(new ProducerRecord[String, SpecificRecord](usersTopic, user.getUserId, user))
   }
