@@ -1,0 +1,23 @@
+{
+  "namespace": "domain",
+  "type": "record",
+  "name": "Tweet",
+  "fields": [
+    {
+      "name": "tweetId",
+      "type": "string"
+    },
+    {
+      "name": "text",
+      "type": "string"
+    },
+    {
+      "name": "createdAt",
+      "type": "long"
+    },
+    {
+      "name": "userId",
+      "type": "string"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+- input topics:
+    - users
+        - table changelog topic of (userId, user) messages
+        - treat as KTable[String, User]
+    - tweets
+        - (tweetId, tweet) messages
+        - must be repartitioned to (tweet.userId, tweet)
+            - can we do this in this join service?
+            - or does it need to be done in some other service?
+            - will generate a new kafka topic, so that all tweets for same userId end up in same topic partition
+        - treat as KStream[String, Tweet]
+    - follows (not impl yet)
+    - likes (not impl yet)
+- join the topics:
+    - users KTable[String, User] is "main" topic
+        - basically replicate this into KTable[String, UserInformation]
+    - other topics just update fields in the UserInformation for userId
+    - currently there is no existing operator to do this in kafka-streams...
+- onion architecture?
+    - domain
+        - entities like User, Tweet, UserInformation, etc
+        - update functions:
+            - (Option[UserInformation], User) => UserInformation
+            - (Option[UserInformation], Tweet) => UserInformation
+    - api
+        - is there even anything here?
+        - kafka-streams provides the api to key-value storage (e.g. RocksDB)
+        - maybe view kafka-streams as providing the api layer?
+    - infrastructure
+        - kafka-streams specific code
+        - uses entities and update functions from domain layer
+- tweet, follow, like, etc counts are really reduce-by-key operations
+    - tweets: KStream[TweetId, Tweet]
+    - tweetsByUserId: KStream[UserId, Int] = tweets.map((tweetId, tweet) => (tweet.userId, 1)) //repartition by userId
+    - tweetCountsByUserId: KTable[UserId, Int] = tweetsByUserId.reduceByKey((a, b) => a + b)
+    - this should be generalizable to KStream[K, V] => KTable[VId, Int] where VId is the id type of V
+- if we have a KTable[UserId, User] and a KTable[UserId, Int] of counts, we can join them
+    - may need to map KTable[UserId, User] => KTable[UserId, UserInformation] first
+    - usersWithTweetCounts: KTable[UserId, UserInformation] = users.leftJoin(tweetCounts, (userInformation, count) => incrementTweetCount(userInformat, count))
+    - then just join ^^ with other count tables: followerCounts, followeeCounts, likeCounts, etc
+    - ultimately have KTable[UserId, UserInfomration] with all user fields and all counts
+- usage of leftJoin
+    - in a real system, user would be created first, and then tweets for user would appear later
+    - any time user info changes, we want an updated UserInformation record to be output
+    - do ^^ even when user has no tweets
+    - leftJoin fulfills these requirements
+    - if tweet count for user appears before user info, no record is output
+        - however, tweet count is stored in local state
+        - when user info for user appears, it will be joined with existing count
+        - so this will work out eventually: no counts will be lost

@@ -1,0 +1,37 @@
+{
+  "namespace": "domain",
+  "type": "record",
+  "name": "UserInformation",
+  "fields": [
+    {
+      "name": "userId",
+      "type": "string"
+    },
+    {
+      "name": "username",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    {
+      "name": "name",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    {
+      "name": "description",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    {
+      "name": "tweetCount",
+      "type": "int",
+      "default": 0
+    }
+  ]
+}
