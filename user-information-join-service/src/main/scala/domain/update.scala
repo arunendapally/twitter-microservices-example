@@ -1,6 +1,13 @@
 package domain
 
 object UpdateFunctions {
+
+  val joinUserWithTweetCount: (User, Long) => UserInformation = (user, tweetCount) =>
+    setFields(UserInformation.newBuilder, user)
+      .setUserId(user.getUserId)
+      .setTweetCount(tweetCount.toInt) //TODO maybe UserInformation.tweetCount shoudl be a Long?
+      .build
+
   def setFields(builder: UserInformation.Builder, user: User): UserInformation.Builder = 
     builder
       .setUsername(user.getUsername)
