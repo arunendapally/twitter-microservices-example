@@ -11,6 +11,6 @@ Download the [Confluent Platform](http://www.confluent.io/download/) to get the 
 bin/kafka-avro-console-consumer \
   --zookeeper zookeeper.local:32181 \
   --property schema.registry.url=http://schema-registry.local:8081 \
-  --topic tweets \
+  --topic tweet-service.tweets \
   --property print.key=true
 ```
