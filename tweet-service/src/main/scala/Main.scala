@@ -1,12 +1,9 @@
 package infrastructure
 
-import twitter4j.TwitterStreamFactory
-import twitter4j.conf.ConfigurationBuilder
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig}
 import io.confluent.kafka.serializers.{KafkaAvroSerializer, AbstractKafkaAvroSerDeConfig}
 import org.apache.avro.specific.SpecificRecord
 import java.util.Properties
-import domain._
 import infrastructure.kafka.KafkaRepository
 import infrastructure.t4j.Twitter4jListener
 import org.slf4j.LoggerFactory
@@ -26,16 +23,11 @@ object Main extends App with KafkaRepository with Twitter4jListener {
   props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, config.getString("tweet-service.schema-registry-url"))
   val producer = new KafkaProducer[String, SpecificRecord](props)
 
-  val twitter4jConfiguration = new ConfigurationBuilder()
-    .setOAuthConsumerKey(config.getString("twitter.oauth.consumer-key"))
-    .setOAuthConsumerSecret(config.getString("twitter.oauth.consumer-secret"))
-    .setOAuthAccessToken(config.getString("twitter.oauth.access-token"))
-    .setOAuthAccessTokenSecret(config.getString("twitter.oauth.access-token-secret"))
-    .build()
-
-  val twitterStream = new TwitterStreamFactory(twitter4jConfiguration).getInstance()
-  twitterStream.addListener(this)
-  twitterStream.sample()
+  val oauthConsumerKey = config.getString("twitter.oauth.consumer-key")
+  val oauthConsumerSecret = config.getString("twitter.oauth.consumer-secret")
+  val oauthAccessToken = config.getString("twitter.oauth.access-token")
+  val oauthAccessTokenSecret = config.getString("twitter.oauth.access-token-secret")
+  val twitterStream = startTwitterStream()
 
   scala.sys.addShutdownHook {
     twitterStream.shutdown()
