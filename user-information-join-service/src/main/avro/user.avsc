@@ -1,0 +1,23 @@
+{
+  "namespace": "domain",
+  "type": "record",
+  "name": "User",
+  "fields": [
+    {
+      "name": "userId",
+      "type": "string"
+    },
+    {
+      "name": "username",
+      "type": "string"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "description",
+      "type": "string"
+    }
+  ]
+}
