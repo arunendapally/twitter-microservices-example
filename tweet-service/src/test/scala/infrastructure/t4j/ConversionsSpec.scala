@@ -1,8 +1,9 @@
-package domain
+package infrastructure.t4j
 
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import java.util.Date
+import domain.{FakeStatus, FakeUser}
 
 object ConversionsSpec extends Specification {
   "Conversions" should {

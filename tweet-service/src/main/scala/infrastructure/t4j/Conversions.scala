@@ -1,6 +1,7 @@
-package domain
+package infrastructure.t4j
 
 import twitter4j.Status
+import domain.{Tweet, User}
 
 object Conversions {
   def fromStatus(status: Status): (Tweet, User) = (
