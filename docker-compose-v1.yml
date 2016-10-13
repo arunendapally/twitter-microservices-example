@@ -1,0 +1,26 @@
+zookeeper:
+  image: confluentinc/cp-zookeeper:3.0.1
+  net: host
+  environment:
+    ZOOKEEPER_CLIENT_PORT: 32181
+    ZOOKEEPER_TICK_TIME: 2000
+
+kafka:
+  image: confluentinc/cp-kafka:3.0.1
+  net: host
+  links:
+    - zookeeper
+  environment:
+    KAFKA_BROKER_ID: 1
+    KAFKA_ZOOKEEPER_CONNECT: 127.0.0.1:32181
+    KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:29092
+
+schema-registry:
+  image: confluentinc/cp-schema-registry:3.0.1
+  net: host
+  links:
+    - zookeeper
+    - kafka
+  environment:
+    SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 127.0.0.1:32181
+    SCHEMA_REGISTRY_HOST_NAME: localhost
