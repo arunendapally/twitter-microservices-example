@@ -12,6 +12,7 @@ lazy val specs2Version = "3.8.3-scalaz-7.1"
 
 libraryDependencies ++= Seq(
   "org.apache.kafka" % "kafka-streams" % kafkaVersion,
+  "org.apache.kafka" % "kafka-streams" % kafkaVersion % "test" classifier "test",
   "org.apache.kafka" % "kafka-clients" % kafkaVersion,
   "org.apache.avro" % "avro" % "1.7.7",
   "io.confluent" % "kafka-avro-serializer" % "3.0.1",
