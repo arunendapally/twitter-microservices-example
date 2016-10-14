@@ -2,7 +2,8 @@ package infrastructure.kafka
 
 import org.apache.kafka.common.serialization.{Serializer, Deserializer, Serde}
 import io.confluent.kafka.serializers.{KafkaAvroSerializer, KafkaAvroDeserializer}
-import java.util.{Map => JMap}
+import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG
+import java.util.{Map => JMap, HashMap => JHashMap}
 
 class KafkaAvroSerde extends Serde[Object] {
   private[this] val kafkaAvroSerializer = new KafkaAvroSerializer
@@ -19,5 +20,14 @@ class KafkaAvroSerde extends Serde[Object] {
   def close(): Unit = {
     serializer.close()
     deserializer.close()
+  }
+}
+
+class SpecificKafkaAvroSerde extends KafkaAvroSerde {
+  override def configure(configs: JMap[String, _], isKey: Boolean): Unit = {
+    val effectiveConfigs = new JHashMap[String, Any](configs)
+    effectiveConfigs.put(SPECIFIC_AVRO_READER_CONFIG, true)
+    serializer.configure(effectiveConfigs, isKey)
+    deserializer.configure(effectiveConfigs, isKey)
   }
 }
