@@ -3,9 +3,9 @@ package infrastructure
 import java.util.Properties
 import org.apache.kafka.streams.{StreamsConfig, KafkaStreams}
 import org.apache.kafka.streams.kstream.KStreamBuilder
-import io.confluent.kafka.serializers.{KafkaAvroSerializer, AbstractKafkaAvroSerDeConfig}
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
 import com.typesafe.config.ConfigFactory
-import infrastructure.kafka.UserInformationJoinService
+import infrastructure.kafka.{UserInformationJoinService, KafkaAvroSerde}
 import org.slf4j.LoggerFactory
 
 object Main extends App {
@@ -17,8 +17,8 @@ object Main extends App {
   props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, config.getString("service.kafka-bootstrap-servers"))
   props.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, config.getString("service.zookeeper-connect"))
   props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, config.getString("service.schema-registry-url"))
-  props.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, classOf[KafkaAvroSerializer])
-  props.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, classOf[KafkaAvroSerializer])
+  props.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, classOf[KafkaAvroSerde])
+  props.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, classOf[KafkaAvroSerde])
   val streamsConfig = new StreamsConfig(props)
 
   val builder = new KStreamBuilder
