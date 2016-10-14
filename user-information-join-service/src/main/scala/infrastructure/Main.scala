@@ -22,7 +22,7 @@ object Main extends App {
   val streamsConfig = new StreamsConfig(props)
 
   val builder = new KStreamBuilder
-  UserInformationJoinService.build(config.getString("service.usersTopic"), config.getString("service.tweetsTopic"), builder)
+  UserInformationJoinService.build(config.getString("service.users-topic"), config.getString("service.tweets-topic"), builder)
 
   val streams = new KafkaStreams(builder, streamsConfig)
   streams.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
