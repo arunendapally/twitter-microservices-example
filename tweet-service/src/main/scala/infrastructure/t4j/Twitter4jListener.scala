@@ -22,14 +22,13 @@ trait Twitter4jListener extends StatusListener with TweetRepository with UserRep
   def oauthAccessToken: String
   def oauthAccessTokenSecret: String
 
-  val twitter4jConfiguration = new ConfigurationBuilder()
-    .setOAuthConsumerKey(oauthConsumerKey)
-    .setOAuthConsumerSecret(oauthConsumerSecret)
-    .setOAuthAccessToken(oauthAccessToken)
-    .setOAuthAccessTokenSecret(oauthAccessTokenSecret)
-    .build()
-
   def startTwitterStream(): TwitterStream = {
+    val twitter4jConfiguration = new ConfigurationBuilder()
+      .setOAuthConsumerKey(oauthConsumerKey)
+      .setOAuthConsumerSecret(oauthConsumerSecret)
+      .setOAuthAccessToken(oauthAccessToken)
+      .setOAuthAccessTokenSecret(oauthAccessTokenSecret)
+      .build()
     val twitterStream = new TwitterStreamFactory(twitter4jConfiguration).getInstance()
     twitterStream.addListener(this)
     twitterStream.sample()
