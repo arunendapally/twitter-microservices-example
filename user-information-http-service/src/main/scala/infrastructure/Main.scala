@@ -1,7 +1,7 @@
 package infrastructure
 
 import infrastructure.http4s.Http4sService
-import infrastructure.inmemory.InMemoryRawKeyValueStore
+import infrastructure.rocksdb.RocksDbRawKeyValueStore
 import infrastructure.kafka.KeyValueStoreWritingConsumer
 import infrastructure.confluentschemaregistry.{RealConfluentAvroPrimitiveSerializer, RealConfluentSpecificRecordDeserializer, SpecificRecordUserReader}
 import domain.{UserInformation => AvroUser}
@@ -14,7 +14,7 @@ object Main extends Http4sService {
   val config = ConfigFactory.load()
   val logger = LoggerFactory.getLogger(getClass)
 
-  override lazy val raw = new InMemoryRawKeyValueStore {}
+  override lazy val raw = new RocksDbRawKeyValueStore("user-information")
 
   val schemaRegistryUrl = config.getString("user-information-http-service.schema-registry-url")
   val topic = config.getString("user-information-http-service.user-information-topic")
@@ -29,6 +29,7 @@ object Main extends Http4sService {
 
   scala.sys.addShutdownHook {
     consumer.close()
+    raw.close()
     logger.info("Shutting down")
   }
 }
