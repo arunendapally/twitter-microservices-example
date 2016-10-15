@@ -5,17 +5,20 @@ import java.util.concurrent.atomic.AtomicBoolean
 import scala.collection.JavaConversions._
 import org.apache.kafka.clients.consumer.{KafkaConsumer, ConsumerRecord}
 import api.RawKeyValueStore
+import org.slf4j.LoggerFactory
 
 class KeyValueStoreWritingConsumer(
   kafkaBootstrapServers: String,
   topic: String,
   groupId: String,
   store: RawKeyValueStore) extends Runnable {
+  private[this] val logger = LoggerFactory.getLogger(getClass)
 
   val running = new AtomicBoolean(true)
 
   def process(record: ConsumerRecord[Array[Byte], Array[Byte]]): Unit = {
     store.put(record.key, record.value)
+    // logger.debug("Put key " + new String(record.key))
   }
 
   override def run(): Unit = {
@@ -28,15 +31,18 @@ class KeyValueStoreWritingConsumer(
     props.put("session.timeout.ms", "30000")
     props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
     props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
+    logger.info(s"Consuming from $topic...")
     val consumer = new KafkaConsumer[Array[Byte], Array[Byte]](props)
     consumer.subscribe(List(topic))
     while (running.get) {
       val records = consumer.poll(100)
       for (record <- records) process(record)
     }
+    logger.info("Consumer stopped")
   }
 
   def close(): Unit = {
+    logger.info("Stopping consumer...")
     running.set(false)
   }
 }

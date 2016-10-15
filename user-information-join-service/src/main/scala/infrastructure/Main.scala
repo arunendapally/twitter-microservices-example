@@ -13,16 +13,20 @@ object Main extends App {
   val logger = LoggerFactory.getLogger(getClass)
 
   val props = new Properties
-  props.put(StreamsConfig.APPLICATION_ID_CONFIG, config.getString("service.application-id"))
-  props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, config.getString("service.kafka-bootstrap-servers"))
-  props.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, config.getString("service.zookeeper-connect"))
-  props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, config.getString("service.schema-registry-url"))
+  props.put(StreamsConfig.APPLICATION_ID_CONFIG, config.getString("user-information-join-service.application-id"))
+  props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, config.getString("user-information-join-service.kafka-bootstrap-servers"))
+  props.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, config.getString("user-information-join-service.zookeeper-connect"))
+  props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, config.getString("user-information-join-service.schema-registry-url"))
   props.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, classOf[KafkaAvroSerde])
   props.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, classOf[SpecificKafkaAvroSerde])
   val streamsConfig = new StreamsConfig(props)
 
   val builder = new KStreamBuilder
-  UserInformationJoinService.build(config.getString("service.users-topic"), config.getString("service.tweets-topic"), builder)
+  UserInformationJoinService.build(
+    config.getString("user-information-join-service.users-topic"), 
+    config.getString("user-information-join-service.tweets-topic"), 
+    config.getString("user-information-join-service.user-information-topic"),
+    builder)
 
   val streams = new KafkaStreams(builder, streamsConfig)
   streams.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {

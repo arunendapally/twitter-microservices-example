@@ -5,7 +5,11 @@ import org.apache.kafka.streams.kstream.{KStreamBuilder, KStream, KTable}
 import domain._
 
 object UserInformationJoinService {
-  def build(usersTopic: String, tweetsTopic: String, builder: KStreamBuilder): Unit = {
+  def build(
+      usersTopic: String, 
+      tweetsTopic: String, 
+      userInformationTopic: String,
+      builder: KStreamBuilder): Unit = {
     val usersByUserId: KTable[String, User] = builder.table(usersTopic)
 
     val tweetsByTweetId: KStream[String, Tweet] = builder.stream(tweetsTopic)
@@ -15,5 +19,6 @@ object UserInformationJoinService {
     val tweetCountsByUserId: KTable[String, Long] = tweetsByUserId.countByKey("tweetCountsByUserId").mapValues(toLong) //if mapValues is a performance hit, could just use JLong everywhere
 
     val userInformation: KTable[String, UserInformation] = usersByUserId.leftJoin(tweetCountsByUserId, UpdateFunctions.joinUserWithTweetCount)
+    userInformation.to(userInformationTopic)
   }
 }

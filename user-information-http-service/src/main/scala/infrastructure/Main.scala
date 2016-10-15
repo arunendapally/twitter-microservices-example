@@ -7,20 +7,28 @@ import infrastructure.confluentschemaregistry.{RealConfluentAvroPrimitiveSeriali
 import infrastructure.avro.{User => AvroUser}
 import domain.User
 import api.{Serializer, Deserializer}
+import com.typesafe.config.ConfigFactory
+import org.slf4j.LoggerFactory
 
-object Main extends infrastructure.http4s.Http4sService {
+object Main extends Http4sService {
+  val config = ConfigFactory.load()
+  val logger = LoggerFactory.getLogger(getClass)
+
   override lazy val raw = new InMemoryRawKeyValueStore {}
 
-  val schemaRegistryUrl = "192.168.99.100:8080" //TODO from config
-  val topic = "user-information"
+  val schemaRegistryUrl = config.getString("user-information-http-service.schema-registry-url")
+  val topic = config.getString("user-information-http-service.user-information-topic")
   override lazy val userIdSerializer: Serializer[String] = new RealConfluentAvroPrimitiveSerializer[String](schemaRegistryUrl, topic, true)
   override lazy val userDeserializer: Deserializer[User] = new RealConfluentSpecificRecordDeserializer[AvroUser, User](schemaRegistryUrl, false)(SpecificRecordUserReader)
 
-  val kafkaBootstrapServers = "192.168.99.100:9092"
-  val applicationInstanceId = "TODO"
+  val kafkaBootstrapServers = config.getString("user-information-http-service.kafka-bootstrap-servers")
+  val applicationInstanceId = "TODO" //needs to be a value unique to this app instance, stable across runs, multiple instances on same machine must be unique
   val groupId = s"user-information-http-service-$applicationInstanceId"
   val consumer = new KeyValueStoreWritingConsumer(kafkaBootstrapServers, topic, groupId, raw)
   new Thread(consumer).start()
 
-  //TODO shutdown hook: close consumer, store
+  scala.sys.addShutdownHook {
+    consumer.close()
+    logger.info("Shutting down")
+  }
 }
