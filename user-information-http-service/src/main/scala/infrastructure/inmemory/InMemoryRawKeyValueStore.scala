@@ -19,13 +19,7 @@ trait InMemoryRawKeyValueStore extends RawKeyValueStore {
 
   def wrap(bytes: Array[Byte]) = new ByteArrayWrapper(bytes)
 
-  override def get(key: Array[Byte]): Future[Option[Array[Byte]]] = {
-    Future.successful {
-      val value = store.get(wrap(key))
-      logger.info("Looked up " + new String(key))
-      value
-    }
-  }
+  override def get(key: Array[Byte]): Future[Option[Array[Byte]]] = Future.successful(store.get(wrap(key)))
 
   override def put(key: Array[Byte], value: Array[Byte]): Unit = store.update(wrap(key), value)
 }

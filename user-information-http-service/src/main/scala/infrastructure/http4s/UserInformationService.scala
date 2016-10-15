@@ -15,13 +15,11 @@ trait UserInformationService extends UserRepository {
   implicit def userIdSerializer: Serializer[String]
   implicit def userDeserializer: Deserializer[User]
   
-  def userResponse(userId: String): Task[Response] = {
-    logger.info(s"Looking up userId $userId")
+  def userResponse(userId: String): Task[Response] = 
     getUser(userId) flatMap { 
       case Some(user) => Ok(user)
       case None => NotFound()
     } asTask
-  }
 
   lazy val userInformationService = HttpService {
     case GET -> Root / "users" / userId => 

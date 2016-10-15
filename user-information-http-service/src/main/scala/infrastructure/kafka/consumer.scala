@@ -18,7 +18,6 @@ class KeyValueStoreWritingConsumer(
 
   def process(record: ConsumerRecord[Array[Byte], Array[Byte]]): Unit = {
     store.put(record.key, record.value)
-    // logger.debug("Put key " + new String(record.key))
   }
 
   override def run(): Unit = {
