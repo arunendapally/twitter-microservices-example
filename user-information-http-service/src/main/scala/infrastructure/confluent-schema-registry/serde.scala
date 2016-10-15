@@ -48,6 +48,7 @@ trait ConfluentAvroPrimitiveSerializer[T] extends ConfluentAvroSerializer with S
 
 class RealConfluentAvroPrimitiveSerializer[T](schemaRegistryUrl: String, val topic: String, val isKey: Boolean) extends ConfluentAvroPrimitiveSerializer[T] {
   override lazy val schemaRegistryClient: SchemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryUrl, 1000)
+  override def createConfigs = super.createConfigs ++ Map(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG -> schemaRegistryUrl)
 }
 
 trait GenericContainerWriter[T] {
@@ -62,6 +63,7 @@ abstract class ConfluentAvroGenericSerializer[T : GenericContainerWriter] extend
 
 class RealConfluentAvroGenericSerializer[T : GenericContainerWriter](schemaRegistryUrl: String, val topic: String, val isKey: Boolean) extends ConfluentAvroGenericSerializer[T] {
   override lazy val schemaRegistryClient: SchemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryUrl, 1000)
+  override def createConfigs = super.createConfigs ++ Map(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG -> schemaRegistryUrl)
 }
 
 /*
@@ -108,10 +110,12 @@ abstract class ConfluentSpecificRecordDeserializer[R <: SpecificRecord, T](impli
 
 class RealConfluentGenericRecordDeserializer[T : GenericRecordReader](schemaRegistryUrl: String, val isKey: Boolean) extends ConfluentGenericRecordDeserializer[T] {
   override lazy val schemaRegistryClient: SchemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryUrl, 1000)
+  override def createConfigs = super.createConfigs ++ Map(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG -> schemaRegistryUrl)
 }
 
 class RealConfluentSpecificRecordDeserializer[R <: SpecificRecord, T](schemaRegistryUrl: String, val isKey: Boolean)(implicit reader: SpecificRecordReader[R, T]) extends ConfluentSpecificRecordDeserializer[R, T] {
   override lazy val schemaRegistryClient: SchemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryUrl, 1000)
+  override def createConfigs = super.createConfigs ++ Map(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG -> schemaRegistryUrl)
 }
 
 trait TestConfluentAvroSerde extends ConfluentAvroSerde {
