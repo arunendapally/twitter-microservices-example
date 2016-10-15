@@ -4,7 +4,7 @@ import infrastructure.http4s.Http4sService
 import infrastructure.inmemory.InMemoryRawKeyValueStore
 import infrastructure.kafka.KeyValueStoreWritingConsumer
 import infrastructure.confluentschemaregistry.{RealConfluentAvroPrimitiveSerializer, RealConfluentSpecificRecordDeserializer, SpecificRecordUserReader}
-import infrastructure.avro.{User => AvroUser}
+import domain.{UserInformation => AvroUser}
 import domain.User
 import api.{Serializer, Deserializer}
 import com.typesafe.config.ConfigFactory

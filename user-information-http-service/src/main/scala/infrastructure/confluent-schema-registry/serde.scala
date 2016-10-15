@@ -135,7 +135,7 @@ class TestConfluentGenericRecordDeserializer[T : GenericRecordReader](val isKey:
 class TestConfluentSpecificRecordDeserializer[R <: SpecificRecord, T](val isKey: Boolean)(implicit reader: SpecificRecordReader[R, T]) extends ConfluentSpecificRecordDeserializer[R, T] with TestConfluentAvroSerde
 
 import domain.User
-import infrastructure.avro.{User => AvroUser}
+import domain.{UserInformation => AvroUser}
 object GenericRecordUserWriter extends GenericContainerWriter[User] {
   import org.apache.avro._
   import org.apache.avro.generic._
