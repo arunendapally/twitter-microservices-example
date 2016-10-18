@@ -1,11 +1,15 @@
 digraph services {
   twitter [label = "Twitter Streaming API"]
   tweetService [label = "tweet-sevice", shape = box]
+  followService [label = "follow-service", shape = box]
+  likeService [label = "like-service", shape = box]
   userInfoHttpService [label = "user-information-http-service", shape = box]
   userInfoJoinService [label = "user-information-join-service", shape = box]
 
   tweetsTopic [label = "tweets", shape = cds]
   usersTopic [label = "users", shape = cds]
+  followsTopic [label = "follows", shape = cds]
+  likesTopic [label = "likes", shape = cds]
   userInfoTopic [label = "user-information", shape = cds]
 
   twitter -> tweetService [label = "HTTP"]
@@ -15,4 +19,11 @@ digraph services {
   tweetsTopic -> userInfoJoinService
   userInfoJoinService -> userInfoTopic
   userInfoTopic -> userInfoHttpService
+  followService -> followsTopic
+  likeService -> likesTopic
+  followsTopic -> userInfoJoinService
+  likesTopic -> userInfoJoinService
+  usersTopic -> followService
+  usersTopic -> likeService
+  tweetsTopic -> likeService
 }
