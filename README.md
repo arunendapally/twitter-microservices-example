@@ -319,5 +319,6 @@
     - follow service
     - like service
     - compute follow and like counts
+    - what about deleting tweets? unfollowing? unliking?
     - fix in-memory kafka test: not shutting down/cleaning up properly
     - generic kv lookup web service and concrete instance for user info
