@@ -1,0 +1,23 @@
+{
+  "namespace": "domain",
+  "type": "record",
+  "name": "Follow",
+  "fields": [
+    {
+      "name": "followId",
+      "type": "string"
+    },
+    {
+      "name": "followerId",
+      "type": "string"
+    },
+    {
+      "name": "followeeId",
+      "type": "string"
+    },
+    {
+      "name": "created",
+      "type": "long"
+    }
+  ]
+}

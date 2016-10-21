@@ -1,0 +1,7 @@
+- kafka-streams app
+- KTable[String, User] from users topic
+- periodically choose 2 random users
+    - if user1 doesn't already follow user2
+    - put user1 -> user2 in some local store...
+        - TODO details of this for fast retrieval and efficient storage
+    - send (followId, Follow) message to follows topic
