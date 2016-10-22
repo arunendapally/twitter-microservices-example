@@ -152,20 +152,30 @@ object GenericRecordUserWriter extends GenericContainerWriter[User] {
 
 object SpecificRecordUserWriter extends GenericContainerWriter[User] {
   override def write(user: User): GenericContainer = 
-    new AvroUser(user.userId, user.username.getOrElse(""), user.tweetCount)
+    new AvroUser(
+      user.userId, 
+      user.username.getOrElse(""), 
+      user.tweetCount,
+      user.followerCount,
+      user.followingCount)
 }
 
 object GenericRecordUserReader extends GenericRecordReader[User] {
   override def read(record: GenericRecord): User = 
     User.fromUserFields(
-      record.get("user_id").toString, 
+      record.get("userId").toString, 
       record.get("username").toString)
-      .withTweetCount(record.get("tweet_count").asInstanceOf[Int])
+      .withTweetCount(record.get("tweetCount").asInstanceOf[Long])
+      .withFollowerCount(record.get("followerCount").asInstanceOf[Long])
+      .withFollowingCount(record.get("followingCount").asInstanceOf[Long])
 }
 
 object SpecificRecordUserReader extends SpecificRecordReader[AvroUser, User] {
   override def read(record: AvroUser): User = 
-    User.fromUserFields(record.getUserId, record.getUsername).withTweetCount(record.getTweetCount)
+    User.fromUserFields(record.getUserId, record.getUsername)
+      .withTweetCount(record.getTweetCount)
+      .withFollowerCount(record.getFollowerCount)
+      .withFollowingCount(record.getFollowingCount)
 }
 
 object AvroUserIdSerializer extends TestConfluentAvroPrimitiveSerializer("user-topic", true)
