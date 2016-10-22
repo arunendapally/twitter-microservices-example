@@ -315,8 +315,8 @@
     - serde impls using read schema registry client
     - consume from twitter streaming api, writer tweets & users to kafka topics
     - stream join service that produces user info to kafka topic that http service consumes
-  - what to do next?
     - follow service
+  - what to do next?
     - like service
     - compute follow and like counts
     - what about deleting tweets? unfollowing? unliking?

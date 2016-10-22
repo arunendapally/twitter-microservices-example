@@ -30,7 +30,17 @@
     },
     {
       "name": "tweetCount",
-      "type": "int",
+      "type": "long",
+      "default": 0
+    },
+    {
+      "name": "followingCount",
+      "type": "long",
+      "default": 0
+    },
+    {
+      "name": "followerCount",
+      "type": "long",
       "default": 0
     }
   ]

@@ -8,6 +8,16 @@ object UpdateFunctions {
       .setTweetCount(tweetCount.toInt) //TODO maybe UserInformation.tweetCount shoudl be a Long?
       .build
 
+  val joinWithFollowingCount: (UserInformation, Long) => UserInformation = (userInformation, followingCount) => {
+    userInformation.setFollowingCount(followingCount)
+    userInformation
+  }
+
+  val joinWithFollowerCount: (UserInformation, Long) => UserInformation = (userInformation, followerCount) => {
+    userInformation.setFollowerCount(followerCount)
+    userInformation
+  }
+
   def setFields(builder: UserInformation.Builder, user: User): UserInformation.Builder = 
     builder
       .setUsername(user.getUsername)

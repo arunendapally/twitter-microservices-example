@@ -23,7 +23,7 @@ object UserInformationJoinServiceSpec extends Specification {
       val valueSerde = new KafkaAvroSerde()
 
       MockedStreams()
-        .topology { builder => UserInformationJoinService.build(usersTopic, tweetsTopic, builder) }
+        .topology { builder => UserInformationJoinService.build(usersTopic, tweetsTopic, followsTopic, builder) }
         .input(usersTopic, keySerde, valueSerde, input)
         .output("topic-out", keySerde, valueSerde, exp.size) shouldEqual exp
     }
@@ -32,5 +32,6 @@ object UserInformationJoinServiceSpec extends Specification {
   trait context extends Scope {
     val usersTopic = "test.users"
     val tweetsTopic = "test.tweets"
+    val followsTopic = "test.follows"
   }
 }

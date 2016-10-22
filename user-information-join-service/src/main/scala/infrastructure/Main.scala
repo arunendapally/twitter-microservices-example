@@ -25,6 +25,7 @@ object Main extends App {
   UserInformationJoinService.build(
     config.getString("user-information-join-service.users-topic"), 
     config.getString("user-information-join-service.tweets-topic"), 
+    config.getString("user-information-join-service.follows-topic"),
     config.getString("user-information-join-service.user-information-topic"),
     builder)
 

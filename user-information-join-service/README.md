@@ -1,3 +1,12 @@
+```
+bin/kafka-avro-console-consumer \
+  --zookeeper zookeeper.local:32181 \
+  --property schema.registry.url=http://schema-registry.local:8081 \
+  --topic user-information-join-service.user-information \
+  --property print.key=true
+```
+
+
 - input topics:
     - users
         - table changelog topic of (userId, user) messages
