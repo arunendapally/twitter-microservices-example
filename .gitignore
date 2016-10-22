@@ -3,3 +3,4 @@ project/project
 project/target
 user-information-http-service/user-information
 .DS_Store
+hs_err*.log
