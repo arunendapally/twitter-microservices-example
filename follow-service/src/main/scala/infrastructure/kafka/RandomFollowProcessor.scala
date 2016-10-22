@@ -24,6 +24,31 @@ class RandomFollowProcessor() extends AbstractProcessor[String, User] {
   }
 
   override def punctuate(timestamp: Long): Unit = logTime("punctuate") {
+    // completeSets()
+    randomPairs()
+    //TODO reduce userIds down to some fixed size so it doesn't grow unbounded
+  }
+
+  def randomPairs(): Unit = {
+    val percentOfUsers = 0.05
+    val chosenUserIds = mutable.ListBuffer.empty[String]
+    for (userId <- userIds; if Random.nextDouble < percentOfUsers) {
+      chosenUserIds += userId
+    }
+    var count = 0
+    for {
+      pair <- chosenUserIds.grouped(2)
+      followerId <- pair.headOption
+      followeeId <- pair.lastOption
+    } {
+      val follow = new Follow(randomUUID.toString, followerId, followeeId, new Date().getTime)
+      context.forward(follow.getFollowId, follow)
+      count += 1
+    }
+    logger.debug(s"Generated $count new follows")
+  }
+
+  def completeSets(): Unit = {
     val percentOfUsers = 0.05
     val followerIds = mutable.Set.empty[String]
     val followeeIds = mutable.Set.empty[String]
@@ -38,7 +63,6 @@ class RandomFollowProcessor() extends AbstractProcessor[String, User] {
       count += 1
     }
     logger.debug(s"Generated $count new follows")
-    //TODO reduce userIds down to some fixed size so it doesn't grow unbounded
   }
 
   // override def close(): Unit = ???
