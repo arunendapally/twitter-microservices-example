@@ -316,9 +316,10 @@
     - consume from twitter streaming api, writer tweets & users to kafka topics
     - stream join service that produces user info to kafka topic that http service consumes
     - follow service
+    - compute follow counts
   - what to do next?
     - like service
-    - compute follow and like counts
+    - compute like counts
     - what about deleting tweets? unfollowing? unliking?
     - fix in-memory kafka test: not shutting down/cleaning up properly
     - generic kv lookup web service and concrete instance for user info
