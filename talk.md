@@ -3,7 +3,7 @@
 - Need to build a service that: 
     1) provides a single point of access to data created in many different places
     2) has very low latency requirements
-    - Example: 
+     - Example: 
         - User Information service
         - User fields
         - Aggregates of other user activity
@@ -55,6 +55,7 @@
     - SELECT COUNT(*) FROM follows WHERE follower_id = ?
     - SELECT COUNT(*) FROM follows WHERE followee_id = ?
     - SELECT COUNT(*) FROM likes WHERE user_id = ?
+- In microservices architecture, we're now sharing tables
 
 ## Normalized Relational Database + Cache
 
