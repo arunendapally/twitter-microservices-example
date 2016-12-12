@@ -65,7 +65,7 @@ SELECT COUNT(*) FROM likes WHERE user_id = ?
 
 Many existing services that generate lots of revenue are implemented like this, and if this approach meets all requirements, then great!
 
-However, many developers have discovered problems with approach over the years. First off, it's somewhat complex: we are performing multiple queries across multiple tables. If our service had different requirements, these aggregations could be much more complex, with grouping and filtering clauses, as well as joins across multiple tables.
+However, many developers have discovered problems with this approach over the years. First off, it's somewhat complex: we are performing multiple queries across multiple tables. If our service had different requirements, these aggregations could be much more complex, with grouping and filtering clauses, as well as joins across multiple tables.
 
 Second, it's expensive: these queries are aggregating a (potentially) large number of rows. While I may not have a large number of followers, [Katy Perry has over 90 million](https://twitter.com/katyperry/followers). This puts load on the database, increases response latency of our service, and these aggregations are repeated on every request for the same `userId`.
 
@@ -77,4 +77,4 @@ However, introducing this cache into our service presents its own problems. Whil
 
 These problems would be solved if we could just update the materialized views in the cache whenever any data changed in those source tables. Our new service would have no complex DB queries, only simple, fast cache lookups. There would never be cache misses, and the materialized views in the cache would never be stale. How can we accomplish this?
 
-If we have a mechanism to produce inserted and updated rows in those tables to Kafka topics, then we can consume those data changes and update the cached materialized views. 
+If we have a mechanism to send inserted and updated rows in those tables to Kafka topics, then we can consume those data changes and update the cached materialized views. 
