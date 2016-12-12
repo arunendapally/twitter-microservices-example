@@ -28,3 +28,53 @@ The User Information Service will provide a single HTTP resource: `GET /users/:u
   "likeCount": 456
 }
 ```
+
+Let's assume that the data this service needs is stored in a relational database (e.g. Postgres) in normalized tables. (Twitter's actual data storage is probably not like this, but many existing systems that we're all familiar with do follow this standard model, so let's roll with it.)
+
+- users
+  - user_id
+  - username
+  - name
+  - description
+- tweets
+  - tweet_id
+  - text
+  - user_id
+- follows
+  - follow_id
+  - follower_id
+  - followee_id
+- likes
+  - like_id
+  - user_id
+  - tweet_id
+
+A classic implementation of this service would likely end up querying the DB directly using SQL.
+
+```
+SELECT * FROM users WHERE user_id = ?
+
+SELECT COUNT(*) FROM tweets WHERE user_id = ?
+
+SELECT COUNT(*) FROM follows WHERE follower_id = ?
+
+SELECT COUNT(*) FROM follows WHERE followee_id = ?
+
+SELECT COUNT(*) FROM likes WHERE user_id = ?
+```
+
+Many existing services that generate lots of revenue are implemented like this, and if this approach meets all requirements, then great!
+
+However, many developers have discovered problems with approach over the years. First off, it's somewhat complex: we are performing multiple queries across multiple tables. If our service had different requirements, these aggregations could be much more complex, with grouping and filtering clauses, as well as joins across multiple tables.
+
+Second, it's expensive: these queries are aggregating a (potentially) large number of rows. While I may not have a large number of followers, [Katy Perry has over 90 million](https://twitter.com/katyperry/followers). This puts load on the database, increases response latency of our service, and these aggregations are repeated on every request for the same `userId`.
+
+From an architectural perspective, our new service would be sharing data stores with other services. In the world of microservices, this is generally considered an anit-pattern. The shared data store tightly couples the services together, preventing them from evolving independently.
+
+The standard solution to the above problems is to add a cache, such as Redis. Our service can compute the results of complex queries and store them in the cache, creating a materialized view, which is then easily queried using a simple, fast key lookup. This materialized view cache belongs only to our new service, decoupling it a bit from other services.
+
+However, introducing this cache into our service presents its own problems. While our service can now do a single fast key lookup to get the materialized view from the cache instead of querying the DB, it still has to query the DB and populate the cache on a cache miss, so the complex DB queries remain. When a key is found in the cache, how do we know if the materialized view is up-to-date or stale? We can use a TTL on cache entires to bound staleness, but the lower the TTL, the less effective the cache is.
+
+These problems would be solved if we could just update the materialized views in the cache whenever any data changed in those source tables. Our new service would have no complex DB queries, only simple, fast cache lookups. There would never be cache misses, and the materialized views in the cache would never be stale. How can we accomplish this?
+
+If we have a mechanism to produce inserted and updated rows in those tables to Kafka topics, then we can consume those data changes and update the cached materialized views. 
