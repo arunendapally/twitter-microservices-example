@@ -1,5 +1,13 @@
 This repository contains code and [slides](https://github.com/zcox/twitter-microservices-example/blob/master/Updating%20Materialized%20Views%20and%20Caches%20Using%20Kafka.pdf) for a [talk at Prairie.Code()](http://prairiecode.amegala.com/sessions/updating-materialized-views-and-caches-using-kafka).
 
+- [x] main ideas draft
+- [ ] polish up rough ideas into proper English
+- [ ] moar diagrams
+- [ ] intro
+- [ ] code only impls kafka streams => rocksdb in service, not kafka connect, redis, interactive queries, etc
+
+# [Blog Post Title]
+
 ## Building a New Service
 
 Imagine that we are asked to build a new service that provides a single point of read access to data from multiple sources within our company. Data is created and updated by those other sources, not this new service. We may need to query multiple tables or databases, performing complex (and potentially expensive) joins and aggregations. Other services within our company will obtain this derived data from our new service, using it in various ways.
