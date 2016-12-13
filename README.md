@@ -7,6 +7,8 @@
 
 # [Blog Post Title]
 
+[intro]
+
 ## Building a New Service
 
 Imagine that we are asked to build a new service that provides a single point of read access to data from multiple sources within our company. Data is created and updated by those other sources, not this new service. We may need to query multiple tables or databases, performing complex (and potentially expensive) joins and aggregations. Other services within our company will obtain this derived data from our new service, using it in various ways.
