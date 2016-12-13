@@ -2,6 +2,7 @@
 - [ ] polish up rough ideas into proper English
 - [ ] moar diagrams
 - [ ] intro
+- [ ] confluent review
 - [ ] code only impls kafka streams => rocksdb in service, not kafka connect, redis, interactive queries, etc
 
 # [Blog Post Title]
