@@ -1,5 +1,3 @@
-This repository contains code and [slides](https://github.com/zcox/twitter-microservices-example/blob/master/Updating%20Materialized%20Views%20and%20Caches%20Using%20Kafka.pdf) for a [talk at Prairie.Code()](http://prairiecode.amegala.com/sessions/updating-materialized-views-and-caches-using-kafka).
-
 - [x] main ideas draft
 - [ ] polish up rough ideas into proper English
 - [ ] moar diagrams
