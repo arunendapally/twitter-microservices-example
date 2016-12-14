@@ -110,19 +110,37 @@ The application that modifies data in the database can also send data change mes
 
 ## Updating Materialized Views
 
-user information service receives `GET /users/:userId` request and needs to send back user information JSON object. ideal materialized view is just a simple key lookup by `userId` with all of the fields we need to put into JSON. Could use Redis, but also could just use single table in RDBMS, one column per json field.
+Our new User Information service receives `GET /users/:userId` requests and returns a user information JSON object for the `userId`. The ideal materialized view for the service is just a simple key lookup by `userId` that returns all of the fields we need to put into JSON. We could use Redis for this materialized view cache, or we could just use a single new table in the RDBMS, with one column per JSON field. We can choose the right data store for our use case.
 
-users consumer: put user fields from msg into materialized view for `userId` key
-  - postgres: INSERT INTO user_information (user_id, username, ...) VALUES (?, ?, ...) ON CONFLICT DO UPDATE
-  - redis: HMSET $userId username $username ...
+To update the materialized view cache, we register a [Kafka consumer](http://kafka.apache.org/documentation#theconsumer) on each changelog topic. The consumer receives each data change message from Kafka, and then updates the cache in some way.
 
-tweets consumer: increment `tweetCount` for `userId`
-  - postgres: UPDATE user_information SET tweet_count = tweet_count + 1 WHERE user_id = ?
-  - redis: HINCRBY $userId tweetCount 1
+In our example, we have four database tables, so we will have four Kafka changelog topics:
+- users
+- tweets
+- follows
+- likes
 
-follows consumer: increment `followerCount` for `followeeId`, increment `followingCount` for `followerId`
+In the consumer descriptions below, we'll provide examples of storing the materialized views in Postgres and Redis. For Postgres, we'll have a table named `user_information` with one column per field of the materialized view. For Redis, we'll store each materialized view in a hash with key `user-information:$userId`.
 
-likes consumer: increment `likeCount` for `userId`
+The users topic consumer puts user fields from the message into the materialized view for the `userId` key:
+- Postgres (upsert): `INSERT INTO user_information (user_id, username, name, description, ...) VALUES (?, ?, ?, ?, ...) ON CONFLICT DO UPDATE`
+- Redis: `HMSET user-information:$userId username $username name $name description $description ...`
+
+The tweets topic consumer increments the tweet count field for the tweet's `userId`:
+- Postgres: `UPDATE user_information SET tweet_count = tweet_count + 1 WHERE user_id = ?`
+- Redis: `HINCRBY user-information:$userId tweet-count 1`
+
+The follows topic consumer increments both the follower count for the follow's `followeeId`, and the following count for the follow's `followerId`:
+- Postgres: 
+  - `UPDATE user_information SET follower_count = follower_count + 1 WHERE user_id = ?`
+  - `UPDATE user_information SET following_count = following_count + 1 WHERE user_id = ?`
+- Redis:
+  - `HINCRBY user-information:$followeeId follower-count 1`
+  - `HINCRBY user-information:$followerId following-count 1`
+
+The likes topic consumer increments the like count for the like's `userId`:
+- Postgres: `UPDATE user_information SET like_count = like_count + 1 WHERE user_id = ?`
+- Redis: `HINCRBY user-information:$userId like-count 1`
 
 ## Kafka Streams
 
