@@ -98,19 +98,15 @@ If we have a mechanism to send inserted and updated rows in those tables to Kafk
 
 ## Sending Data Changes to Kafka Topics
 
-goal: replicate each table into a kafka topic. consumers can then process data changes. each row becomes a message. message key is table's primary key, message value is some serialized form of all columns in the row (prefer avro + schema registry). use log compaction to retain the most recent version of each entity.
+We will send all data changes from each source table into its own Kafka topic. Because [tables and logs are dual](https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying), this essentially replicates each table into a Kafka topic. Consumers of these topics can then replicate the original tables or transform them however they wish.
 
-- topics
-  - users
-  - tweets
-  - follows
-  - likes
+Each row in the original table becomes a message sent to the topic. The message key is the row's primary key, and the message value contains the values of all columns in the row. The message key and value must be serialized to byte arrays; personally, I recommend using [Avro](http://avro.apache.org) along with the [Confluent Schema Registry](http://docs.confluent.io/3.1.1/schema-registry/docs/index.html), but the choice is yours. Any time a new row is inserted into the table, or an existing row is updated, that row is converted to a message and sent to the Kafka topic. If a row is deleted, we can also send a message with a `null` value to remove that row from the topic. We also enable [log compaction](http://kafka.apache.org/documentation#compaction) on this topic so that only the most recent version of each row is retained, so the topic size only grows in the number of rows, not the number of changes to those rows. We refer to such topics as *changelog* topics, since they contain a log of changes made to the table.
 
-Kafka Connect: periodically query DB for new and updated rows in table, convert each row to message and send to kafka topic.
+[Kafka Connect](http://kafka.apache.org/documentation#connect) with the [Confluent JDBC connector](http://docs.confluent.io/3.1.1/connect/connect-jdbc/docs/index.html) provides a simple way to send table changes to a Kafka topic. It periodically queries the database for new and updated rows in the table, converts each row to a message, and sends it to the changelog topic.
 
-Bottled Water: postgres extension that uses logical decoding to send new, updated and deleted rows to kafka topics. changes get to kafka faster than KC, but may not be production-ready and restricted to postgres.
+If you're using Postgres, [Bottled Water](https://github.com/confluentinc/bottledwater-pg) is also worth looking at. It is a Postgres extension that uses logical decoding to send new, updated and deleted rows to changelog topics. These changes get to Kafka faster than using Kafka Connect, but it may not be quite production-ready today for all use cases, and of course is restricted only to Postgres. Similar change data capture tools may be available for other databases.
 
-Dual-Write: services can modify data in DB and then also send data change message to kafka topic. but this adds complexity to service, and need to handle things like not sending msg on failed tx, and could be ordering issues. recommended to extract change out of db after it is committed.
+The application that modifies data in the database can also send data change messages to the changelog topic itself. This approach is known as *dual-writes*. It is generally not recommended, however, since it adds complexity to the application, you need to handle situations such as not sending the change message on a failed transaction, and change messages could end up out-of-order on the topic. If possible, it's best to use one of the change data capture approaches described above.
 
 ## Updating Materialized Views
 
