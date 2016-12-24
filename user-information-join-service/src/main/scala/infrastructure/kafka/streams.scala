@@ -11,28 +11,42 @@ object UserInformationJoinService {
       followsTopic: String,
       userInformationTopic: String,
       builder: KStreamBuilder): Unit = {
-    val usersByUserId: KTable[String, User] = builder.table(usersTopic)
 
-    val tweetsByTweetId: KStream[String, Tweet] = builder.stream(tweetsTopic)
-    val extractUserId = (tweetId: String, tweet: Tweet) => tweet.getUserId
-    val tweetsByUserId: KStream[String, Tweet] = tweetsByTweetId.selectKey(extractUserId) //we repartitioned by a different key, does this automatically go through a new kafka topic?
-    val toLong = (l: JLong) => l.toLong
-    val tweetCountsByUserId: KTable[String, Long] = tweetsByUserId.countByKey("tweetCountsByUserId").mapValues(toLong) //if mapValues is a performance hit, could just use JLong everywhere
+    val tweetCounts = builder
+      .stream[String, Tweet](tweetsTopic)
+      .selectKey((tweetId: String, tweet: Tweet) => tweet.getUserId)
+      .groupByKey()
+      .count("tweetCounts")
 
-    //follower --> follows --> followee
-    val followsByFollowId: KStream[String, Follow] = builder.stream(followsTopic)
-    val extractFollowerId = (followId: String, follow: Follow) => follow.getFollowerId
-    val extractFolloweeId = (followId: String, follow: Follow) => follow.getFolloweeId
-    val followsByFollowerId = followsByFollowId.selectKey(extractFollowerId)
-    val followsByFolloweeId = followsByFollowId.selectKey(extractFolloweeId)
-    val followCountsByFollowerId = followsByFollowerId.countByKey("followCountsByFollowerId").mapValues(toLong) //# following
-    val followCountsByFolloweeId = followsByFolloweeId.countByKey("followCountsByFolloweeId").mapValues(toLong) //# followers
+    val follows = builder.stream[String, Follow](followsTopic)
 
-    val userInformation: KTable[String, UserInformation] = 
-      usersByUserId
-        .leftJoin(tweetCountsByUserId, UpdateFunctions.joinUserWithTweetCount)
-        .leftJoin(followCountsByFollowerId, UpdateFunctions.joinWithFollowingCount)
-        .leftJoin(followCountsByFolloweeId, UpdateFunctions.joinWithFollowerCount)
-    userInformation.to(userInformationTopic)
+    val followingCounts = follows
+      .selectKey((followId: String, follow: Follow) => follow.getFollowerId)
+      .groupByKey()
+      .count("followingCounts")
+
+    val followerCounts = follows
+      .selectKey((followId: String, follow: Follow) => follow.getFolloweeId)
+      .groupByKey()
+      .count("followerCounts")
+
+    builder
+      .table[String, User](usersTopic, "users")
+      .mapValues((user: User) => UserInformation.newBuilder
+        .setUserId(user.getUserId)
+        .setUsername(user.getUsername)
+        .setName(user.getName)
+        .setDescription(user.getDescription)
+        .build)
+      .leftJoin(tweetCounts, { (userInformation: UserInformation, tweetCount: JLong) => 
+        userInformation.setTweetCount(tweetCount)
+        userInformation })
+      .leftJoin(followingCounts, { (userInformation: UserInformation, followingCount: JLong) => 
+        userInformation.setFollowingCount(followingCount)
+        userInformation })
+      .leftJoin(followerCounts, { (userInformation: UserInformation, follwoerCount: JLong) => 
+        userInformation.setFollowerCount(follwoerCount)
+        userInformation })
+      .to(userInformationTopic)
   }
 }

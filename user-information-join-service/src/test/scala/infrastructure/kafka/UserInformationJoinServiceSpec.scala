@@ -14,6 +14,8 @@ class KafkaAvroSerde extends Serde[Any] {
   def serializer(): org.apache.kafka.common.serialization.Serializer[Any] = ???
 }
 
+//TODO this test needs to be implemented
+
 object UserInformationJoinServiceSpec extends Specification {
   "User information join service" should {
     "build a working topology" in new context {
@@ -23,7 +25,7 @@ object UserInformationJoinServiceSpec extends Specification {
       val valueSerde = new KafkaAvroSerde()
 
       MockedStreams()
-        .topology { builder => UserInformationJoinService.build(usersTopic, tweetsTopic, followsTopic, builder) }
+        .topology { builder => UserInformationJoinService.build(usersTopic, tweetsTopic, followsTopic, userInformationTopic, builder) }
         .input(usersTopic, keySerde, valueSerde, input)
         .output("topic-out", keySerde, valueSerde, exp.size) shouldEqual exp
     }
@@ -33,5 +35,6 @@ object UserInformationJoinServiceSpec extends Specification {
     val usersTopic = "test.users"
     val tweetsTopic = "test.tweets"
     val followsTopic = "test.follows"
+    val userInformationTopic = "test.user-information"
   }
 }
