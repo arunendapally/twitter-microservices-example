@@ -108,7 +108,7 @@ If you're using Postgres, [Bottled Water](https://github.com/confluentinc/bottle
 
 The application that modifies data in the database can also send data change messages to the changelog topic itself. This approach is known as *dual-writes*. It is generally not recommended, however, since it adds complexity to the application, you need to handle situations such as not sending the change message on a failed transaction, and change messages could end up out-of-order on the topic. If possible, it's best to use one of the change data capture approaches described above.
 
-## Updating Materialized Views
+## Updating Materialized Views in the Cache
 
 Our new User Information service receives `GET /users/:userId` requests and returns a user information JSON object for the `userId`. The ideal materialized view for the service is just a simple key lookup by `userId` that returns all of the fields we need to put into JSON. We could use Redis for this materialized view cache, or we could just use a single new table in the RDBMS, with one column per JSON field. We can choose the right data store for our use case.
 
@@ -142,11 +142,17 @@ The likes topic consumer increments the like count for the like's `userId`:
 - Postgres: `UPDATE user_information SET like_count = like_count + 1 WHERE user_id = ?`
 - Redis: `HINCRBY user-information:$userId like-count 1`
 
+With this approach, we have essentially used an external data store (Postgres or Redis) to join the changelog topics together and store the result of stateful computations (the most recent user fields and counts of tweets/follows/likes by `userId`). For many use cases, this may be a great solution. However, there are a few potential issues that we may run in to. The changelog topics may be so high volume (i.e. lots of data changes) that too many writes are sent to the cache. Batching the cache writes, or scaling the cache up/out may be possible, or may not be. The request load on our new http service may be so high that too many reads are sent to the cache. Maybe we can scale the cache up/out to handle the read load, maybe not. Perhaps we don't want to operate/maintain yet another data store. Or, the response time requirements for our service may be so low (e.g. single-digit msec) that we may not be able tolerate network I/O between our service and the cache. We may also want changes to materialized views in the cache to be consumable by other services, so we may want a changelog topic for the materialized views.
+
 ## Kafka Streams
 
-So far, we have essentially used an external data store (Postgres or Redis) to join the changelog topics together and store the result of stateful computations (the most recent user fields and counts of tweets/follows/likes by `userId`). For many use cases, this may be a great solution. However, there are a few potential issues that we may run in to. The changelog topics may be so high volume (i.e. lots of data changes) that too many writes are sent to the cache. Batching the cache writes, or scaling the cache up/out may be possible, or may not be. The request load on our new http service may be so high that too many reads are sent to the cache. Maybe we can scale the cache up/out to handle the read load, maybe not. Perhaps we don't want to operate/maintain yet another data store. Or, the response time requirements for our service may be so low (e.g. single-digit msec) that we may not be able tolerate network I/O between our service and the cache. We may also want changes to materialized views in the cache to be consumable by other services, so we may want a changelog topic for the materialized views.
+A changelog topic receives a message each time a row in its corresponding table changes. As long as this table is part of a system in continuing operation within our business, the rows in it will change, and its changelog topic is therefore an unbounded data set. [Stream processing systems provide an effective way to process unbounded data sets](https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-101). Let's examine how we can use [Kafka Streams](http://docs.confluent.io/3.1.1/streams/index.html) to process these unbounded streams of data changes in our changelog topics, and explore the advantages of doing so.
 
-[Kafka Streams](http://docs.confluent.io/3.1.1/streams/index.html) offers an alternative way to join topics and store state, using stream processing. Instead of 4 separate consumers each updating materialized views in some cache, we would instead create a single application that consumes all 4 topics and processes them into materialized views stored in local state. There are then several options for making the materialized views in this state accessible to the User Information service.
+ offers an alternative way to join topics and store state, using stream processing. 
+
+Instead of using four separate consumers each updating materialized views in some cache, we will instead create a single Kafka Streams program that consumes all 4 topics, and processes them into materialized views stored in local state. There are then several options for making the materialized views in this state accessible to the User Information service.
+
+### Computing Materialized Views
 
 We repartition the tweets, follows, and likes topics by `userId` and then count-by-key to create tables of counts for each `userId`. Then we join those tables to the users topic to create a user info table. This is essentially the same materialized view of user info we previously stored in the external cache.
 
