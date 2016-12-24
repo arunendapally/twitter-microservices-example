@@ -1,6 +1,13 @@
 package domain
 
+import java.lang.{Long => JLong}
+
+//TODO none of this is needed, just delete it
+
 object UpdateFunctions {
+
+  val toUserInformation: User => UserInformation = (user) => 
+    setFields(UserInformation.newBuilder, user).setUserId(user.getUserId).build
 
   val joinUserWithTweetCount: (User, Long) => UserInformation = (user, tweetCount) =>
     setFields(UserInformation.newBuilder, user)
@@ -8,12 +15,17 @@ object UpdateFunctions {
       .setTweetCount(tweetCount.toInt) //TODO maybe UserInformation.tweetCount shoudl be a Long?
       .build
 
-  val joinWithFollowingCount: (UserInformation, Long) => UserInformation = (userInformation, followingCount) => {
+  val setTweetCount: (UserInformation, JLong) => UserInformation = (userInformation, tweetCount) => {
+    userInformation.setTweetCount(tweetCount)
+    userInformation
+  }
+
+  val setFollowingCount: (UserInformation, JLong) => UserInformation = (userInformation, followingCount) => {
     userInformation.setFollowingCount(followingCount)
     userInformation
   }
 
-  val joinWithFollowerCount: (UserInformation, Long) => UserInformation = (userInformation, followerCount) => {
+  val setFollowerCount: (UserInformation, JLong) => UserInformation = (userInformation, followerCount) => {
     userInformation.setFollowerCount(followerCount)
     userInformation
   }
