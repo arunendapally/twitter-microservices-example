@@ -152,9 +152,56 @@ We repartition the tweets, follows, and likes topics by `userId` and then count-
 
 State is stored in RocksDB, which is a very fast local in-process key-value store. State is also changelogged to Kafka topics, which can handle a high volume of messages. This can help handle very high volume input changelog topics from other services, if needed. Kafka Streams processing and state is partitioned just like Kafka topics for scaling out. State is fault tolerant because Kafka.
 
+```scala
+val builder = new KStreamBuilder
+
+val tweetCounts = builder
+  .stream[String, Tweet](tweetsTopic)
+  .selectKey((tweetId: String, tweet: Tweet) => tweet.getUserId)
+  .groupByKey()
+  .count("tweetCounts")
+
+val follows = builder.stream[String, Follow](followsTopic)
+
+val followingCounts = follows
+  .selectKey((followId: String, follow: Follow) => follow.getFollowerId)
+  .groupByKey()
+  .count("followingCounts")
+
+val followerCounts = follows
+  .selectKey((followId: String, follow: Follow) => follow.getFolloweeId)
+  .groupByKey()
+  .count("followerCounts")
+
+builder
+  .table[String, User](usersTopic, "users")
+  .mapValues((user: User) => UserInformation.newBuilder
+    .setUserId(user.getUserId)
+    .setUsername(user.getUsername)
+    .setName(user.getName)
+    .setDescription(user.getDescription)
+    .build)
+  .leftJoin(tweetCounts, { (userInformation: UserInformation, tweetCount: JLong) => 
+    userInformation.setTweetCount(tweetCount)
+    userInformation })
+  .leftJoin(followingCounts, { (userInformation: UserInformation, followingCount: JLong) => 
+    userInformation.setFollowingCount(followingCount)
+    userInformation })
+  .leftJoin(followerCounts, { (userInformation: UserInformation, follwoerCount: JLong) => 
+    userInformation.setFollowerCount(follwoerCount)
+    userInformation })
+  .to(userInformationTopic)
+```
+
+### Remote Cache
+
 the final user information table can also be output to a changelog kafka topic. this topic could be consumed and simply written to the same external data store we used before (Postgres or Redis). 
 
+### Local Cache
+
 one alternative is for each instance of our user information service to consume the user info topic and store it locally in its own RocksDB instance. user info is then obtained from rocksdb to serve the http requests. rocksdb is local and very fast, no network i/o. can scale to match request load by running more/less user info service instances. handling input changelog topic volume and svc request volume is then decoupled. if total user info size exceeds single machine, then partition between svc instances, also need some router in front to route http requests to correct svc instance.
+
+### Interactive Queries
 
 another alternative is to use new Interactive Queries functionality. allows user info state in kafka streams application to be queried directly, without outputting it to some external store (postres, redis, rocksdb). the kafka streams app then becomes the user info svc. may work really well. does couple changelog topic processing with http req serving. also IQ is very new.
 
