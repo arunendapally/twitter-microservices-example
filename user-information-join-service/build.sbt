@@ -6,7 +6,7 @@ scalaVersion := "2.11.8"
 
 resolvers += "Confluent" at "http://packages.confluent.io/maven/"
 
-lazy val kafkaVersion = "0.10.0.1-cp1"
+lazy val kafkaVersion = "0.10.1.0-cp1"
 
 lazy val specs2Version = "3.8.3-scalaz-7.1"
 

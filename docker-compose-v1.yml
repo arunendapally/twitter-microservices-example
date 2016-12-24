@@ -1,5 +1,5 @@
 zookeeper:
-  image: confluentinc/cp-zookeeper:3.0.1
+  image: confluentinc/cp-zookeeper:3.1.1
   ports:
     - "32181:32181"
   environment:
@@ -7,7 +7,7 @@ zookeeper:
     ZOOKEEPER_TICK_TIME: 2000
 
 kafka:
-  image: confluentinc/cp-kafka:3.0.1
+  image: confluentinc/cp-kafka:3.1.1
   links:
     - zookeeper
   ports:
@@ -18,7 +18,7 @@ kafka:
     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://192.168.99.100:29092
 
 schema-registry:
-  image: confluentinc/cp-schema-registry:3.0.1
+  image: confluentinc/cp-schema-registry:3.1.1
   links:
     - zookeeper
     - kafka
