@@ -3,6 +3,7 @@ package infrastructure.kafka
 import java.lang.{Long => JLong}
 import org.apache.kafka.streams.kstream.{KStreamBuilder, KStream, KTable}
 import domain._
+import scala.language.implicitConversions
 
 object UserInformationJoinService {
   def build(
@@ -12,23 +13,26 @@ object UserInformationJoinService {
       userInformationTopic: String,
       builder: KStreamBuilder): Unit = {
 
-    val tweetCounts = builder
-      .stream[String, Tweet](tweetsTopic)
-      .selectKey((tweetId: String, tweet: Tweet) => tweet.getUserId)
-      .groupByKey()
-      .count("tweetCounts")
+    val tweetCounts: KTable[String, Long] = 
+      builder
+        .stream[String, Tweet](tweetsTopic)
+        .selectKey((tweetId: String, tweet: Tweet) => tweet.getUserId)
+        .groupByKey()
+        .count("tweetCounts")
 
     val follows = builder.stream[String, Follow](followsTopic)
 
-    val followingCounts = follows
-      .selectKey((followId: String, follow: Follow) => follow.getFollowerId)
-      .groupByKey()
-      .count("followingCounts")
+    val followingCounts: KTable[String, Long] = 
+      follows
+        .selectKey((followId: String, follow: Follow) => follow.getFollowerId)
+        .groupByKey()
+        .count("followingCounts")
 
-    val followerCounts = follows
-      .selectKey((followId: String, follow: Follow) => follow.getFolloweeId)
-      .groupByKey()
-      .count("followerCounts")
+    val followerCounts: KTable[String, Long] = 
+      follows
+        .selectKey((followId: String, follow: Follow) => follow.getFolloweeId)
+        .groupByKey()
+        .count("followerCounts")
 
     builder
       .table[String, User](usersTopic, "users")
@@ -38,13 +42,13 @@ object UserInformationJoinService {
         .setName(user.getName)
         .setDescription(user.getDescription)
         .build)
-      .leftJoin(tweetCounts, { (userInformation: UserInformation, tweetCount: JLong) => 
+      .leftJoin(tweetCounts, { (userInformation: UserInformation, tweetCount: Long) => 
         userInformation.setTweetCount(tweetCount)
         userInformation })
-      .leftJoin(followingCounts, { (userInformation: UserInformation, followingCount: JLong) => 
+      .leftJoin(followingCounts, { (userInformation: UserInformation, followingCount: Long) => 
         userInformation.setFollowingCount(followingCount)
         userInformation })
-      .leftJoin(followerCounts, { (userInformation: UserInformation, follwoerCount: JLong) => 
+      .leftJoin(followerCounts, { (userInformation: UserInformation, follwoerCount: Long) => 
         userInformation.setFollowerCount(follwoerCount)
         userInformation })
       .to(userInformationTopic)

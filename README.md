@@ -158,27 +158,46 @@ We repartition the tweets, follows, and likes topics by `userId` and then count-
 
 State is stored in RocksDB, which is a very fast local in-process key-value store. State is also changelogged to Kafka topics, which can handle a high volume of messages. This can help handle very high volume input changelog topics from other services, if needed. Kafka Streams processing and state is partitioned just like Kafka topics for scaling out. State is fault tolerant because Kafka.
 
+First we create a `KStreamBuilder`, which is the main entry point into the Kafka Streams DSL.
+
 ```scala
 val builder = new KStreamBuilder
+```
 
-val tweetCounts = builder
-  .stream[String, Tweet](tweetsTopic)
-  .selectKey((tweetId: String, tweet: Tweet) => tweet.getUserId)
-  .groupByKey()
-  .count("tweetCounts")
+We need to compute the count of tweets created by each user. To do this, we consume the tweets topic, repartition it by selecting the tweet's `userId` as a new message key, and then count tweets by this key.
 
+```scala
+val tweetCounts: KTable[String, Long] = 
+  builder
+    .stream[String, Tweet](tweetsTopic)
+    .selectKey((tweetId: String, tweet: Tweet) => tweet.getUserId)
+    .groupByKey()
+    .count("tweetCounts")
+```
+
+This produces a table with a count for each `userId`. Below, we will join this table with the stream of user updates.
+
+Similarly, for each user we need to compute both the number of other users they are following and the number of other users following them. These counts can be computed by repartitioning the follows topic in different ways and counting by key.
+
+```scala
 val follows = builder.stream[String, Follow](followsTopic)
 
-val followingCounts = follows
-  .selectKey((followId: String, follow: Follow) => follow.getFollowerId)
-  .groupByKey()
-  .count("followingCounts")
+val followingCounts: KTable[String, Long] = 
+  follows
+    .selectKey((followId: String, follow: Follow) => follow.getFollowerId)
+    .groupByKey()
+    .count("followingCounts")
 
-val followerCounts = follows
-  .selectKey((followId: String, follow: Follow) => follow.getFolloweeId)
-  .groupByKey()
-  .count("followerCounts")
+val followerCounts: KTable[String, Long] = 
+  follows
+    .selectKey((followId: String, follow: Follow) => follow.getFolloweeId)
+    .groupByKey()
+    .count("followerCounts")
+```
 
+Finally, we consume the users changelog topic, map each `User` into the materialized view type `UserInformation`, join in the various count tables from above, and output results to the user information topic.
+
+```scala
 builder
   .table[String, User](usersTopic, "users")
   .mapValues((user: User) => UserInformation.newBuilder
@@ -187,17 +206,19 @@ builder
     .setName(user.getName)
     .setDescription(user.getDescription)
     .build)
-  .leftJoin(tweetCounts, { (userInformation: UserInformation, tweetCount: JLong) => 
+  .leftJoin(tweetCounts, { (userInformation: UserInformation, tweetCount: Long) => 
     userInformation.setTweetCount(tweetCount)
     userInformation })
-  .leftJoin(followingCounts, { (userInformation: UserInformation, followingCount: JLong) => 
+  .leftJoin(followingCounts, { (userInformation: UserInformation, followingCount: Long) => 
     userInformation.setFollowingCount(followingCount)
     userInformation })
-  .leftJoin(followerCounts, { (userInformation: UserInformation, follwoerCount: JLong) => 
+  .leftJoin(followerCounts, { (userInformation: UserInformation, follwoerCount: Long) => 
     userInformation.setFollowerCount(follwoerCount)
     userInformation })
   .to(userInformationTopic)
 ```
+
+Whenever this program receives a new message from one of the source topics, it updates the user information for some `userId` and that updated user information is output to the user information topic. Other downstream services can consume this user information topic and process updates however they wish.
 
 ### Remote Cache
 

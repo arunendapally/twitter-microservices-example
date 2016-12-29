@@ -1,7 +1,7 @@
 package infrastructure
 
 import scala.language.implicitConversions
-import org.apache.kafka.streams.kstream.{KeyValueMapper, ValueJoiner, ValueMapper}
+import org.apache.kafka.streams.kstream.{KeyValueMapper, ValueJoiner, ValueMapper, KTable}
 
 package object kafka {
   implicit def functionToKeyValueMapper[K, V, R](f: (K, V) => R): KeyValueMapper[K, V, R] = 
@@ -18,4 +18,7 @@ package object kafka {
     new ValueMapper[V1, V2] {
       override def apply(v1: V1): V2 = f(v1)
     }
+
+  implicit def tableMapValues[K, V1, V2](table: KTable[K, V1])(implicit f: V1 => V2): KTable[K, V2] = 
+      table.mapValues((value: V1) => f(value))
 }
