@@ -48,8 +48,8 @@ object UserInformationJoinService {
       .leftJoin(followingCounts, { (userInformation: UserInformation, followingCount: Long) => 
         userInformation.setFollowingCount(followingCount)
         userInformation })
-      .leftJoin(followerCounts, { (userInformation: UserInformation, follwoerCount: Long) => 
-        userInformation.setFollowerCount(follwoerCount)
+      .leftJoin(followerCounts, { (userInformation: UserInformation, followerCount: Long) => 
+        userInformation.setFollowerCount(followerCount)
         userInformation })
       .to(userInformationTopic)
   }

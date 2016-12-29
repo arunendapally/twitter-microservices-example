@@ -110,15 +110,9 @@ The application that modifies data in the database can also send data change mes
 
 ## Updating Materialized Views in the Cache
 
-Our new User Information service receives `GET /users/:userId` requests and returns a user information JSON object for the `userId`. The ideal materialized view for the service is just a simple key lookup by `userId` that returns all of the fields we need to put into JSON. We could use Redis for this materialized view cache, or we could just use a single new table in the RDBMS, with one column per JSON field. We can choose the right data store for our use case.
+Our new User Information service receives `GET /users/:userId` requests and returns a user information JSON object for the `userId`. The ideal materialized view for the service is just a simple key lookup by `userId` that returns all of the fields we need to put into JSON. We could use Redis for this materialized view cache, or we could even use a single new table in the RDBMS, with one column per JSON field. There are, of course, many options for storing materialized views, and we can choose the right data store for our use case.
 
-To update the materialized view cache, we register a [Kafka consumer](http://kafka.apache.org/documentation#theconsumer) on each changelog topic. The consumer receives each data change message from Kafka, and then updates the cache in some way.
-
-In our example, we have four database tables, so we will have four Kafka changelog topics:
-- users
-- tweets
-- follows
-- likes
+To update the materialized view cache, we register a [Kafka consumer](http://kafka.apache.org/documentation#theconsumer) on each changelog topic. The consumer receives each data change message from Kafka, and then updates the cache in some way. In our example, we have four database tables, so we will have four Kafka changelog topics: users, tweets, follows, and likes. We will also have four Kafka consumers.
 
 In the consumer descriptions below, we'll provide examples of storing the materialized views in Postgres and Redis. For Postgres, we'll have a table named `user_information` with one column per field of the materialized view. For Redis, we'll store each materialized view in a hash with key `user-information:$userId`.
 
@@ -142,17 +136,17 @@ The likes topic consumer increments the like count for the like's `userId`:
 - Postgres: `UPDATE user_information SET like_count = like_count + 1 WHERE user_id = ?`
 - Redis: `HINCRBY user-information:$userId like-count 1`
 
-With this approach, we have essentially used an external data store (Postgres or Redis) to join the changelog topics together and store the result of stateful computations (the most recent user fields and counts of tweets/follows/likes by `userId`). For many use cases, this may be a great solution. However, there are a few potential issues that we may run in to. The changelog topics may be so high volume (i.e. lots of data changes) that too many writes are sent to the cache. Batching the cache writes, or scaling the cache up/out may be possible, or may not be. The request load on our new http service may be so high that too many reads are sent to the cache. Maybe we can scale the cache up/out to handle the read load, maybe not. Perhaps we don't want to operate/maintain yet another data store. Or, the response time requirements for our service may be so low (e.g. single-digit msec) that we may not be able tolerate network I/O between our service and the cache. We may also want changes to materialized views in the cache to be consumable by other services, so we may want a changelog topic for the materialized views.
+With this approach, we have essentially used an external data store (Postgres or Redis) to join the changelog topics together and store the result of stateful computations (the most recent user fields and counts of tweets/follows/likes by `userId`). For many use cases, this may be a great solution. However, there are a few potential issues that we may run in to. The changelog topics may be so high volume (i.e. lots of data changes) that too many writes are sent to the cache. Batching the cache writes, or scaling the cache up/out may be possible, or may not be. The request load on our new http service may be so high that too many reads are sent to the cache. Maybe we can scale the cache up/out to handle the read load, maybe not. Perhaps we don't want to operate/maintain yet another data store. Or, the response time requirements for our service may be so low (e.g. single-digit msec or less) that we may not be able tolerate network I/O between our service and the cache. We may also want changes to materialized views in the cache to be consumable by other services, so we may want a changelog topic for the materialized views.
 
 ## Kafka Streams
 
-A changelog topic receives a message each time a row in its corresponding table changes. As long as this table is part of a system in continuing operation within our business, the rows in it will change, and its changelog topic is therefore an unbounded data set. [Stream processing systems provide an effective way to process unbounded data sets](https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-101). Let's examine how we can use [Kafka Streams](http://docs.confluent.io/3.1.1/streams/index.html) to process these unbounded streams of data changes in our changelog topics, and explore the advantages of doing so.
+A changelog topic receives a message each time a row in its corresponding table changes. As long as this table is part of a system in continuing operation within our business, the rows in it will change, and its changelog topic is therefore an unbounded data set. [Stream processing systems provide an effective way to process unbounded data sets](https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-101). Let's examine how we can use [Kafka Streams](http://docs.confluent.io/3.1.1/streams/index.html) to process these unbounded streams of data changes in our changelog topics, and explore the benefits of doing so.
 
 Instead of using four separate consumers each updating materialized views in some cache, we will instead create a single Kafka Streams program that consumes all 4 topics, and processes them into materialized views stored in local state. There are then several options for making the materialized views in this state accessible to the User Information service.
 
 ### Computing Materialized Views
 
-First we create a `KStreamBuilder`, which is the main entry point into the Kafka Streams DSL.
+Kafka Streams provides a Java API, but we will show examples below in Scala. First we create a `KStreamBuilder`, which is the main entry point into the Kafka Streams DSL.
 
 ```scala
 val builder = new KStreamBuilder
@@ -206,8 +200,8 @@ builder
   .leftJoin(followingCounts, { (userInformation: UserInformation, followingCount: Long) => 
     userInformation.setFollowingCount(followingCount)
     userInformation })
-  .leftJoin(followerCounts, { (userInformation: UserInformation, follwoerCount: Long) => 
-    userInformation.setFollowerCount(follwoerCount)
+  .leftJoin(followerCounts, { (userInformation: UserInformation, followerCount: Long) => 
+    userInformation.setFollowerCount(followerCount)
     userInformation })
   .to(userInformationTopic)
 ```
