@@ -206,19 +206,23 @@ builder
   .to(userInformationTopic)
 ```
 
-Whenever this program receives a new message from one of the source topics, it updates the user information for some `userId` and that updated user information is output to the user information topic. Other downstream services can consume this user information topic and process updates however they wish.
+Whenever this program receives a new message from one of the source topics, it updates the user information for some `userId` and that updated user information is output to the user information topic. This is essentially another changelog topic that other downstream services can consume and process however they wish.
 
 ### Remote Cache
 
-the final user information table can also be output to a changelog kafka topic. this topic could be consumed and simply written to the same external data store we used before (Postgres or Redis). 
+We could write a Kafka consumer that consumes the user information topic and writes to the same cache we used previously (Postgres or Redis). The User Information service would then query that cache to fulfill HTTP reqeusts.
 
 ### Local Cache
 
-one alternative is for each instance of our user information service to consume the user info topic and store it locally in its own RocksDB instance. user info is then obtained from rocksdb to serve the http requests. rocksdb is local and very fast, no network i/o. can scale to match request load by running more/less user info service instances. handling input changelog topic volume and svc request volume is then decoupled. if total user info size exceeds single machine, then partition between svc instances, also need some router in front to route http requests to correct svc instance.
+One alternative is for each instance of the User Information service to consume the user information topic and store it locally in its own RocksDB instance. User information is then obtained from RocksDB to serve the HTTP requests. RocksDB is local and very fast, requiring no network I/O or external services. 
+
+We can scale this approach to match request load by running more (or fewer user) User Infmration service instances. Handling input changelog topic volume and service request volume is then decoupled. If total user information size exceeds a single machine's capacity, then we can partition the data between service instances, and front the services with a router that can route HTTP requests to the correct service instance.
+
+When a new service instance starts up for the first time, it must populate its local RocksDB cache by consuming the changelog topic from the very beginning, causing a delay before the service is ready to respond to requests. Depending on how much data is in this topic, this delay may be negligible or it may be a very long time. When the service stops, due to a crash or an intentional restart, the RocksDB files are retained on disk and the topic can be consumed from the last committed offsets, resulting in very little startup delay. Kafka provides at-least-once messaging, but key-value updates are idempotent.
 
 ### Interactive Queries
 
-another alternative is to use new Interactive Queries functionality. allows user info state in kafka streams application to be queried directly, without outputting it to some external store (postres, redis, rocksdb). the kafka streams app then becomes the user info svc. may work really well. does couple changelog topic processing with http req serving. also IQ is very new.
+Another interesting alternative is to use Kafka Streams' new [Interactive Queries](http://docs.confluent.io/3.1.1/streams/developer-guide.html#interactive-queries) functionality. This allows state in a Kafka Streams application to be queried directly, without outputting it to some external store (e.g. Postres, Redis, RocksDB). The Kafka Streams application itself can then become the service responding to HTTP requests. Interactive Queries is very new and does couple changelog topic processing with HTTP request serving, although this approach could reduce the number of moving parts in the system and could provide great performance. It is definitely worth assessing for use in your own systems.
 
 ## Summary
 
