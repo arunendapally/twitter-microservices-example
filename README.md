@@ -148,15 +148,9 @@ With this approach, we have essentially used an external data store (Postgres or
 
 A changelog topic receives a message each time a row in its corresponding table changes. As long as this table is part of a system in continuing operation within our business, the rows in it will change, and its changelog topic is therefore an unbounded data set. [Stream processing systems provide an effective way to process unbounded data sets](https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-101). Let's examine how we can use [Kafka Streams](http://docs.confluent.io/3.1.1/streams/index.html) to process these unbounded streams of data changes in our changelog topics, and explore the advantages of doing so.
 
- offers an alternative way to join topics and store state, using stream processing. 
-
 Instead of using four separate consumers each updating materialized views in some cache, we will instead create a single Kafka Streams program that consumes all 4 topics, and processes them into materialized views stored in local state. There are then several options for making the materialized views in this state accessible to the User Information service.
 
 ### Computing Materialized Views
-
-We repartition the tweets, follows, and likes topics by `userId` and then count-by-key to create tables of counts for each `userId`. Then we join those tables to the users topic to create a user info table. This is essentially the same materialized view of user info we previously stored in the external cache.
-
-State is stored in RocksDB, which is a very fast local in-process key-value store. State is also changelogged to Kafka topics, which can handle a high volume of messages. This can help handle very high volume input changelog topics from other services, if needed. Kafka Streams processing and state is partitioned just like Kafka topics for scaling out. State is fault tolerant because Kafka.
 
 First we create a `KStreamBuilder`, which is the main entry point into the Kafka Streams DSL.
 
