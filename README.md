@@ -98,6 +98,8 @@ However, introducing this cache into our service presents some new problems. Whi
 
 These problems would be solved if we could just update the materialized views in the cache whenever any data changed in those source tables. Our new service would have no complex DB queries, only simple, fast cache lookups. There would never be cache misses, and the materialized views in the cache would never be stale. How can we accomplish this?
 
+![](img/question.png)
+
 If we have a mechanism to send inserted and updated rows in those tables to Kafka topics, then we can consume those data changes and update the cached materialized views. 
 
 ## Sending Data Changes to Kafka Topics
@@ -117,6 +119,8 @@ The application that modifies data in the database can also send data change mes
 Our new User Information service receives `GET /users/:userId` requests and returns a user information JSON object for the `userId`. The ideal materialized view for the service is just a simple key lookup by `userId` that returns all of the fields we need to put into JSON. We could use Redis for this materialized view cache, or we could even use a single new table in the RDBMS, with one column per JSON field. There are, of course, many options for storing materialized views, and we can choose the right data store for our use case.
 
 To update the materialized view cache, we register a [Kafka consumer](http://kafka.apache.org/documentation#theconsumer) on each changelog topic. The consumer receives each data change message from Kafka, and then updates the cache in some way. In our example, we have four database tables, so we will have four Kafka changelog topics: users, tweets, follows, and likes. We will also have four Kafka consumers.
+
+![](img/consumers-cache.png)
 
 In the consumer descriptions below, we'll provide examples of storing the materialized views in Postgres and Redis. For Postgres, we'll have a table named `user_information` with one column per field of the materialized view. For Redis, we'll store each materialized view in a hash with key `user-information:$userId`.
 
