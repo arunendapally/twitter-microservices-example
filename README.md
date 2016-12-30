@@ -78,6 +78,8 @@ SELECT COUNT(*) FROM follows WHERE followee_id = ?
 SELECT COUNT(*) FROM likes WHERE user_id = ?
 ```
 
+![](img/classic.png)
+
 Many existing services that generate lots of revenue are implemented like this, and if this approach meets all requirements, then great!
 
 However, many developers have discovered problems with this approach over the years. First off, it's somewhat complex to assemble all of the data needed to fulfill the requests: we are performing multiple queries across multiple tables. This is a fairly simple example; if our service had different requirements, these aggregations could be much more complex, with grouping and filtering clauses, as well as joins across multiple tables.
