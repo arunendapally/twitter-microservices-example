@@ -100,7 +100,7 @@ These problems would be solved if we could just update the materialized views in
 
 ![](img/question.png)
 
-If we have a mechanism to send inserted and updated rows in those tables to Kafka topics, then we can consume those data changes and update the cached materialized views. 
+If we have a mechanism to send inserted and updated rows in those tables to Kafka topics, then we can consume those data changes and update the cached materialized views. This will split updating the materialized views and querying the cache into separate, decoupled services.
 
 ## Sending Data Changes to Kafka Topics
 
