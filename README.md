@@ -152,6 +152,8 @@ A changelog topic receives a message each time a row in its corresponding table 
 
 Instead of using four separate consumers each updating materialized views in some cache, we will instead create a single Kafka Streams program that consumes all 4 topics, and processes them into materialized views stored in local state. There are then several options for making the materialized views in this state accessible to the User Information service.
 
+![](img/kafka-streams.png)
+
 ### Computing Materialized Views
 
 Kafka Streams provides a Java API, but we will show examples below in Scala. First we create a `KStreamBuilder`, which is the main entry point into the Kafka Streams DSL.
@@ -220,9 +222,13 @@ Whenever this program receives a new message from one of the source topics, it u
 
 We could write a Kafka consumer that consumes the user information topic and writes to the same cache we used previously (Postgres or Redis). The User Information service would then query that cache to fulfill HTTP reqeusts.
 
+![](img/kafka-streams-cache.png)
+
 ### Local Cache
 
 One alternative is for each instance of the User Information service to consume the user information topic and store it locally in its own RocksDB instance. User information is then obtained from RocksDB to serve the HTTP requests. RocksDB is local and very fast, requiring no network I/O or external services. 
+
+![](img/kafka-streams-rocksdb.png)
 
 We can scale this approach to match request load by running more (or fewer user) User Infmration service instances. Handling input changelog topic volume and service request volume is then decoupled. If total user information size exceeds a single machine's capacity, then we can partition the data between service instances, and front the services with a router that can route HTTP requests to the correct service instance.
 
@@ -231,6 +237,8 @@ When a new service instance starts up for the first time, it must populate its l
 ### Interactive Queries
 
 Another interesting alternative is to use Kafka Streams' new [Interactive Queries](http://docs.confluent.io/3.1.1/streams/developer-guide.html#interactive-queries) functionality. This allows state in a Kafka Streams application to be queried directly, without outputting it to some external store (e.g. Postres, Redis, RocksDB). The Kafka Streams application itself can then become the service responding to HTTP requests. Interactive Queries is very new and does couple changelog topic processing with HTTP request serving, although this approach could reduce the number of moving parts in the system and could provide great performance. It is definitely worth assessing for use in your own systems.
+
+![](img/interactive-queries.png)
 
 ## Summary
 
