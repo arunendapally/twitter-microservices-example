@@ -57,6 +57,8 @@ SELECT COUNT(*) FROM follows WHERE followee_id = ?
 SELECT COUNT(*) FROM likes WHERE user_id = ?
 ```
 
+So the new service just goes directly to the source tables to get the data it needs to fulfill its requests.
+
 ![](img/classic.png)
 
 Many existing services that generate lots of revenue are implemented like this, and if this approach meets all requirements, then great!
