@@ -87,6 +87,8 @@ If we have a mechanism to send inserted and updated rows in those tables to Kafk
 
 We will send all data changes from each source table into its own Kafka topic. Because [tables and logs are dual](https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying), this essentially replicates each table into a Kafka topic. Consumers of these topics can then replicate the original tables or transform them however they wish.
 
+![](img/changelog0.png)
+
 Each row in the original table becomes a message sent to the topic. The message key is the row's primary key, and the message value contains the values of all columns in the row. The message key and value must be serialized to byte arrays; personally, I recommend using [Avro](http://avro.apache.org) along with the [Confluent Schema Registry](http://docs.confluent.io/3.1.1/schema-registry/docs/index.html), but the choice is yours. Any time a new row is inserted into the table, or an existing row is updated, that row is converted to a message and sent to the Kafka topic. If a row is deleted, we can also send a message with a `null` value to remove that row from the topic. We also enable [log compaction](http://kafka.apache.org/documentation#compaction) on this topic so that only the most recent version of each row is retained, so the topic size only grows in the number of rows, not the number of changes to those rows. We refer to such topics as *changelog* topics, since they contain a log of changes made to the table.
 
 As an example, if we insert two rows into a table, we end up with two messages on the changelog topic. The message key is shown on top of the message value.
@@ -111,7 +113,7 @@ To update the materialized view cache, we register a [Kafka consumer](http://kaf
 
 ![](img/consumers-cache.png)
 
-In the consumer descriptions below, we'll provide examples of storing the materialized views in Postgres and Redis. For Postgres, we'll have a table named `user_information` with one column per field of the materialized view. For Redis, we'll store each materialized view in a hash with key `user-information:$userId`.
+In the consumer descriptions below, we'll provide examples of storing the materialized views in Postgres and Redis. For Postgres, we use a table named `user_information` with one column per field of the materialized view. For Redis, we store each materialized view in a hash with key `user-information:$userId`.
 
 The users topic consumer puts user fields from the message into the materialized view for the `userId` key:
 - Postgres (upsert): `INSERT INTO user_information (user_id, username, name, description, ...) VALUES (?, ?, ?, ?, ...) ON CONFLICT DO UPDATE`
@@ -205,7 +207,7 @@ builder
   .to(userInformationTopic)
 ```
 
-Whenever this program receives a new message from one of the source topics, it updates the user information for some `userId` and that updated user information is output to the user information topic. This is essentially another changelog topic that other downstream services can consume and process however they wish.
+Whenever this program receives a new message from one of the source topics, it updates the user information for some `userId` and that updated user information is output to the user information topic. This is essentially another changelog topic that other downstream services can consume and process however they wish. Let's examine a few different ways we can use this computed user information.
 
 ### Remote Cache
 
