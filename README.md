@@ -11,7 +11,7 @@
 
 ## Building a New Service
 
-Imagine that we are asked to build a new service that provides a single point of read access to data from multiple sources within our company. Data is created and updated by those other sources, not this new service. We may need to query multiple tables or databases, performing complex (and potentially expensive) joins and aggregations. Other services within our company will obtain this derived data from our new service, using it in various ways.
+Imagine that we are asked to build a new service that provides a single point of read access to data from multiple sources within our company. Data is created and updated by those other sources, not this new service. We may need to query multiple tables or databases (or other services), performing complex (and potentially expensive) joins and aggregations. Other services within our company will obtain this derived data from our new service, using it in various ways.
 
 To provide business value, this new service needs to be low latency, providing very fast response times under non-trivial load (e.g. 95th percentile HTTP response time under 5 msec, and max 10 msec, at 1000 HTTP requests/sec). This service may be part of a UI, where [fast responses are important for a good experience](https://www.nngroup.com/articles/response-times-3-important-limits/). Transactional consistency with the other systems of record is *not* required; we can tolerate data update delays, but they should be bounded (e.g. 95th percentile updates available in this service within 5 sec, and max 10 sec). Breaking these SLAs should result in humans being alerted.
 
@@ -23,19 +23,19 @@ The User Information Service will provide a single HTTP resource: `GET /users/:u
 
 ```json
 {
-  "userId": "...",
-  "username": "...",
-  "name": "...",
-  "description": "...",
-  "location": "...",
-  "webPageUrl": "...",
-  "joinedDate": "...",
-  "profileImageUrl": "...",
-  "backgroundImageUrl": "...",
-  "tweetCount": 123,
-  "followingCount": 234,
-  "followerCount": 345,
-  "likeCount": 456
+  "userId": "12542832",
+  "username": "zcox",
+  "name": "Zach Cox",
+  "description": "Engineering @Uptake",
+  "location": "Chicago, IL",
+  "webPageUrl": "https://theza.ch/",
+  "joinedDate": "Tue Jan 22 15:14:44 +0000 2008",
+  "profileImageUrl": "https://pbs.twimg.com/profile_images/692897038124515331/NCpgt2Iz.jpg",
+  "backgroundImageUrl": "https://pbs.twimg.com/profile_banners/12542832/1350571359/1500x500",
+  "tweetCount": 3826,
+  "followingCount": 1096,
+  "followerCount": 887,
+  "likeCount": 203
 }
 ```
 
