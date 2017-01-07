@@ -41,28 +41,7 @@ The User Information Service will provide a single HTTP resource: `GET /users/:u
 
 Let's assume that the data this service needs is stored in a relational database (e.g. Postgres) in normalized tables. (Twitter's actual data storage is probably not like this, but many existing systems that we're all familiar with do follow this standard model, so let's roll with it.)
 
-- users
-  - user_id
-  - username
-  - name
-  - description
-  - location
-  - web_page_url
-  - joined_date
-  - profile_image_url
-  - background_image_url
-- tweets
-  - tweet_id
-  - text
-  - user_id
-- follows
-  - follow_id
-  - follower_id
-  - followee_id
-- likes
-  - like_id
-  - user_id
-  - tweet_id
+![](img/database-schema.png)
 
 A classic implementation of this service would likely end up querying the DB directly using SQL.
 
