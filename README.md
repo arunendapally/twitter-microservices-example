@@ -7,7 +7,7 @@
 
 # [Blog Post Title]
 
-As web developers, we often need to build services that query data from multiple sources in complex ways. To improve performance, these services often pre-compute materialized views and store them in caches. In this article, we'll explore a few problems with this typical approach to populating these caches, and see the wide variety of new solutions to these problems that are made possible simply by sending data changes to Kafka topics.
+As web developers, we often need to build services that query data from multiple sources in complex ways. To improve performance, these services often pre-compute materialized views and store them in caches. In this article, we'll explore a few problems with the typical approach to populating these caches, and see the wide variety of new solutions to these problems that are made possible simply by sending data changes to Kafka topics.
 
 ## Building a New Service
 
