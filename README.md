@@ -231,6 +231,22 @@ Another interesting alternative is to use Kafka Streams' new [Interactive Querie
 
 ![](img/interactive-queries.png)
 
+## Bonus: Data Integration
+
+Sending data changes to Kafka topics has other benefits, besides populating materialized view caches. 
+
+Web and mobile applications today need to provide Google-style, single text field, natural language search. Elasticsearch is the de facto standard data store to power this style of search. Kafka consumers can easily send data to Elasticsearch.
+
+![](img/elasticsearch.png)
+
+Do business folks in your company want to run OLAP queries on all of your data? Stream those data changes from Kafka topics into a data warehouse like [Redshift](https://aws.amazon.com/redshift/).
+
+![](img/redshift.png)
+
+Or maybe you want to provide a UI that updates in near-real-time. A web application can consume the Kafka changelog topics, apply various processing, and then push data to clients using a technology like [WebSocket](https://en.wikipedia.org/wiki/WebSocket) or [Server-sent events](https://en.wikipedia.org/wiki/Server-sent_events).
+
+![](img/web-push.png)
+
 ## Summary
 
-In this article we've worked through building a new service that must get data from multiple sources using complex queries, and the reasons why developers often choose cached materialized views. We also reviewed common problems with the typical approach to populating caches on-demand. Kafka enables a range of interesting solutions to these problems, by routing data changes to consumers which then pre-populate cached materialized views, leading to simpler, faster queries in services. This approach can be used with traditional caches (e.g. Redis) as well as local in-process caches (e.g. RocksDB) for extreme low-latency, or materialized views can even be obtained directly from Kafka Streams internal state stores via the new Interactive Queries feature. By simply sending data changes to Kafka changelog topics, many new solutions to long-standing problems become possible.
+In this article we've worked through building a new service that must obtain data from multiple sources using complex queries, and the reasons why developers often choose cached materialized views. We also reviewed common problems with the typical approach to populating caches on-demand. Kafka enables a range of interesting solutions to these problems, by routing data changes to consumers which then pre-populate cached materialized views, leading to simpler, faster queries in services. This approach can be used with traditional caches (e.g. Redis) as well as local in-process caches (e.g. RocksDB) for extreme low-latency, or materialized views can even be obtained directly from Kafka Streams internal state stores via the new Interactive Queries feature. By simply sending data changes to Kafka changelog topics, many new solutions to long-standing problems become possible.
