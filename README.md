@@ -89,7 +89,7 @@ We will send all data changes from each source table into its own Kafka topic. B
 
 ![](img/changelog0.png)
 
-Each row in the original table becomes a message sent to the topic. The message key is the row's primary key, and the message value contains the values of all columns in the row. The message key and value must be serialized to byte arrays; personally, I recommend using [Avro](http://avro.apache.org) along with the [Confluent Schema Registry](http://docs.confluent.io/3.1.1/schema-registry/docs/index.html), but the choice is yours. Any time a new row is inserted into the table, or an existing row is updated, that row is converted to a message and sent to the Kafka topic. If a row is deleted, we can also send a message with a `null` value to remove that row from the topic. We also enable [log compaction](http://kafka.apache.org/documentation#compaction) on this topic so that only the most recent version of each row is retained, so the topic size only grows in the number of rows, not the number of changes to those rows. We refer to such topics as *changelog* topics, since they contain a log of changes made to the table.
+Each row in the original table becomes a message sent to the topic. The message key is the row's primary key, and the message value contains the values of all columns in the row. The message key and value must be serialized to byte arrays; personally, I recommend using [Avro](http://avro.apache.org) along with the [Confluent Schema Registry](http://docs.confluent.io/current/schema-registry/docs/index.html), but the choice is yours. Any time a new row is inserted into the table, or an existing row is updated, that row is converted to a message and sent to the Kafka topic. If a row is deleted, we can also send a message with a `null` value to remove that row from the topic. We also enable [log compaction](http://kafka.apache.org/documentation#compaction) on this topic so that only the most recent version of each row is retained, so the topic size only grows in the number of rows, not the number of changes to those rows. We refer to such topics as *changelog* topics, since they contain a log of changes made to the table.
 
 As an example, if we insert two rows into a table, we end up with two messages on the changelog topic. The message key is shown on top of the message value.
 
@@ -99,7 +99,7 @@ If a row is updated, a new message is sent to the changelog topic, and Kafka log
 
 ![](img/changelog2.png)
 
-[Kafka Connect](http://kafka.apache.org/documentation#connect) with the [Confluent JDBC connector](http://docs.confluent.io/3.1.1/connect/connect-jdbc/docs/index.html) provides a simple way to send table changes to a Kafka topic. It periodically queries the database for new and updated rows in the table, converts each row to a message, and sends it to the changelog topic.
+[Kafka Connect](http://kafka.apache.org/documentation#connect) with the [Confluent JDBC connector](http://docs.confluent.io/current/connect/connect-jdbc/docs/index.html) provides a simple way to send table changes to a Kafka topic. It periodically queries the database for new and updated rows in the table, converts each row to a message, and sends it to the changelog topic.
 
 If you're using Postgres, [Bottled Water](https://github.com/confluentinc/bottledwater-pg) is also worth looking at. It is a Postgres extension that uses logical decoding to send new, updated and deleted rows to changelog topics. These changes get to Kafka faster than using Kafka Connect, but it may not be quite production-ready today for all use cases, and of course is restricted only to Postgres. Similar change data capture tools may be available for other databases.
 
@@ -139,7 +139,7 @@ With this approach, we have essentially used an external data store (Postgres or
 
 ## Kafka Streams
 
-A changelog topic receives a message each time a row in its corresponding table changes. As long as this table is part of a system in continuing operation within our business, the rows in it will change, and its changelog topic is therefore an unbounded data set. [Stream processing systems provide an effective way to process unbounded data sets](https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-101). Let's examine how we can use [Kafka Streams](http://docs.confluent.io/3.1.1/streams/index.html) to process these unbounded streams of data changes in our changelog topics, and explore the benefits of doing so.
+A changelog topic receives a message each time a row in its corresponding table changes. As long as this table is part of a system in continuing operation within our business, the rows in it will change, and its changelog topic is therefore an unbounded data set. [Stream processing systems provide an effective way to process unbounded data sets](https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-101). Let's examine how we can use [Kafka Streams](http://docs.confluent.io/current/streams/index.html) to process these unbounded streams of data changes in our changelog topics, and explore the benefits of doing so.
 
 Instead of using four separate consumers each updating materialized views in some cache, we will instead create a single Kafka Streams program that consumes all 4 topics, and processes them into materialized views stored in local state. There are then several options for making the materialized views in this state accessible to the User Information service.
 
@@ -227,7 +227,7 @@ When a new service instance starts up for the first time, it must populate its l
 
 ### Interactive Queries
 
-Another interesting alternative is to use Kafka Streams' new [Interactive Queries](http://docs.confluent.io/3.1.1/streams/developer-guide.html#interactive-queries) functionality. This allows state in a Kafka Streams application to be queried directly, without outputting it to some external store (e.g. Postres, Redis, RocksDB). The Kafka Streams application itself can then become the service responding to HTTP requests. Interactive Queries is very new and does couple changelog topic processing with HTTP request serving, although this approach could reduce the number of moving parts in the system and could provide great performance. It is definitely worth assessing for use in your own systems.
+Another interesting alternative is to use Kafka Streams' new [Interactive Queries](http://docs.confluent.io/current/streams/developer-guide.html#interactive-queries) functionality. This allows state in a Kafka Streams application to be queried directly, without outputting it to some external store (e.g. Postres, Redis, RocksDB). The Kafka Streams application itself can then become the service responding to HTTP requests. Interactive Queries is very new and does couple changelog topic processing with HTTP request serving, although this approach could reduce the number of moving parts in the system and could provide great performance. It is definitely worth assessing for use in your own systems.
 
 ![](img/interactive-queries.png)
 
